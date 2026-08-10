@@ -1,75 +1,291 @@
-function getWeatherForLocation(state = 'Andhra Pradesh', district = 'Guntur', lat, lng) {
-  let displayLocation = `${district}, ${state}`;
-  if (lat && lng) {
-    displayLocation = `GPS (${lat.toFixed(2)}, ${lng.toFixed(2)}) - ${district}, ${state}`;
+const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
+const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search';
+
+const weatherCodeMap = {
+  0: { condition: 'Clear Sky', icon: 'sun' },
+  1: { condition: 'Mainly Clear', icon: 'sun' },
+  2: { condition: 'Partly Cloudy', icon: 'cloud-sun' },
+  3: { condition: 'Overcast', icon: 'cloud' },
+  45: { condition: 'Foggy', icon: 'cloud' },
+  48: { condition: 'Foggy', icon: 'cloud' },
+  51: { condition: 'Light Drizzle', icon: 'cloud-rain' },
+  53: { condition: 'Moderate Drizzle', icon: 'cloud-rain' },
+  55: { condition: 'Heavy Drizzle', icon: 'cloud-rain' },
+  61: { condition: 'Light Rain', icon: 'cloud-rain' },
+  63: { condition: 'Moderate Rain', icon: 'cloud-rain' },
+  65: { condition: 'Heavy Rain', icon: 'cloud-rain' },
+  71: { condition: 'Light Snow', icon: 'cloud-snow' },
+  73: { condition: 'Moderate Snow', icon: 'cloud-snow' },
+  75: { condition: 'Heavy Snow', icon: 'cloud-snow' },
+  80: { condition: 'Light Showers', icon: 'cloud-rain' },
+  81: { condition: 'Moderate Showers', icon: 'cloud-rain' },
+  82: { condition: 'Heavy Showers', icon: 'cloud-rain' },
+  95: { condition: 'Thunderstorm', icon: 'cloud-lightning' },
+  96: { condition: 'Thunderstorm with Hail', icon: 'cloud-lightning' },
+  99: { condition: 'Heavy Thunderstorm with Hail', icon: 'cloud-lightning' }
+};
+
+function getWeatherDescription(code) {
+  return weatherCodeMap[code] || {
+    condition: 'Unknown',
+    icon: 'cloud'
+  };
+}
+
+function formatTime(timeString) {
+  if (!timeString) return '--';
+
+  const date = new Date(timeString);
+
+  return date.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+function getDayName(dateString, index) {
+  if (index === 0) return 'Today';
+  if (index === 1) return 'Tomorrow';
+
+  return new Date(`${dateString}T12:00:00`).toLocaleDateString(
+    'en-IN',
+    { weekday: 'short' }
+  );
+}
+
+async function geocodeLocation(state, district) {
+  const searchText = `${district}, ${state}`;
+
+  const url = new URL(GEOCODING_API);
+
+  url.searchParams.set('name', searchText);
+  url.searchParams.set('count', '5');
+  url.searchParams.set('language', 'en');
+  url.searchParams.set('countryCode', 'IN');
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error('Unable to find the selected location.');
   }
 
-  const currentTemp = 31;
-  const humidity = 78;
-  const rainProb = 65;
-  const windSpeed = 14;
-  const uvIndex = 6;
-  const sunrise = '06:12 AM';
-  const sunset = '06:48 PM';
+  const data = await response.json();
 
-  const farmingAdvice = [
-    'Delay chemical sprays for 24 hours due to 65% precipitation probability.',
-    'Maintain proper field drainage for standing paddy crops to avoid root rot.',
-    'Morning dew humidity is high; check chilli foliage for early downy mildew signs.',
-    'Ideal weather for transplanting pulse crops in evening hours.'
-  ];
+  if (!data.results || data.results.length === 0) {
+    throw new Error(`Location not found: ${searchText}`);
+  }
 
-  const alerts = [
-    {
-      type: 'warning',
-      title: 'Moderate Rainfall Expected',
-      description: 'Rain showers predicted over next 24 hours (65% chance). Delay pesticide and fungicide spraying until weather clears.',
-      action: 'Hold chemical spraying'
-    },
-    {
-      type: 'info',
-      title: 'Optimal Soil Moisture',
-      description: 'Current humidity levels (78%) are favorable for paddy and chilli seedling growth. Ensure drainage channels are clear.',
-      action: 'Check field drainage'
-    }
-  ];
+  return data.results[0];
+}
 
-  const hourlyForecast = [
-    { time: '06:00 AM', temp: 26, rainProb: 20, icon: 'cloud-sun' },
-    { time: '09:00 AM', temp: 29, rainProb: 35, icon: 'sun' },
-    { time: '12:00 PM', temp: 33, rainProb: 50, icon: 'cloud-rain' },
-    { time: '03:00 PM', temp: 31, rainProb: 65, icon: 'cloud-lightning' },
-    { time: '06:00 PM', temp: 28, rainProb: 40, icon: 'cloud-sun' },
-    { time: '09:00 PM', temp: 27, rainProb: 25, icon: 'moon' }
-  ];
+async function getWeatherForCoordinates(lat, lng, locationInfo = {}) {
+  const latitude = Number(lat);
+  const longitude = Number(lng);
 
-  const weeklyForecast = [
-    { day: 'Today', condition: 'Scattered Rains', tempMax: 33, tempMin: 25, rainProb: 65 },
-    { day: 'Tomorrow', condition: 'Partly Cloudy', tempMax: 34, tempMin: 26, rainProb: 30 },
-    { day: 'Thu', condition: 'Sunny & Clear', tempMax: 35, tempMin: 27, rainProb: 15 },
-    { day: 'Fri', condition: 'Thunderstorm', tempMax: 31, tempMin: 24, rainProb: 80 },
-    { day: 'Sat', condition: 'Light Rains', tempMax: 32, tempMin: 25, rainProb: 45 },
-    { day: 'Sun', condition: 'Sunny', tempMax: 36, tempMin: 26, rainProb: 10 },
-    { day: 'Mon', condition: 'Partly Cloudy', tempMax: 34, tempMin: 25, rainProb: 20 }
-  ];
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    throw new Error('Invalid GPS coordinates.');
+  }
+
+  const url = new URL(WEATHER_API);
+
+  url.searchParams.set('latitude', latitude.toString());
+  url.searchParams.set('longitude', longitude.toString());
+
+  url.searchParams.set(
+    'current',
+    [
+      'temperature_2m',
+      'relative_humidity_2m',
+      'apparent_temperature',
+      'precipitation',
+      'weather_code',
+      'wind_speed_10m',
+      'uv_index'
+    ].join(',')
+  );
+
+  url.searchParams.set(
+    'hourly',
+    [
+      'temperature_2m',
+      'precipitation_probability',
+      'weather_code'
+    ].join(',')
+  );
+
+  url.searchParams.set(
+    'daily',
+    [
+      'weather_code',
+      'temperature_2m_max',
+      'temperature_2m_min',
+      'precipitation_probability_max',
+      'sunrise',
+      'sunset'
+    ].join(',')
+  );
+
+  url.searchParams.set('forecast_days', '7');
+  url.searchParams.set('timezone', 'auto');
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error('Weather service is currently unavailable.');
+  }
+
+  const data = await response.json();
+
+  if (!data.current || !data.hourly || !data.daily) {
+    throw new Error('Incomplete weather data received.');
+  }
+
+  const currentWeather = getWeatherDescription(
+    data.current.weather_code
+  );
+
+  const hourlyForecast = [];
+
+  const currentHourIndex = data.hourly.time.findIndex(
+    (time) => time >= data.current.time
+  );
+
+  const startIndex = currentHourIndex >= 0 ? currentHourIndex : 0;
+
+  for (
+    let i = startIndex;
+    i < Math.min(startIndex + 6, data.hourly.time.length);
+    i++
+  ) {
+    const hourlyWeather = getWeatherDescription(
+      data.hourly.weather_code[i]
+    );
+
+    hourlyForecast.push({
+      time: formatTime(data.hourly.time[i]),
+      temp: Math.round(data.hourly.temperature_2m[i]),
+      rainProb: Math.round(
+        data.hourly.precipitation_probability[i] || 0
+      ),
+      icon: hourlyWeather.icon
+    });
+  }
+
+  const weeklyForecast = data.daily.time.map((date, index) => {
+    const dailyWeather = getWeatherDescription(
+      data.daily.weather_code[index]
+    );
+
+    return {
+      day: getDayName(date, index),
+      condition: dailyWeather.condition,
+      tempMax: Math.round(
+        data.daily.temperature_2m_max[index]
+      ),
+      tempMin: Math.round(
+        data.daily.temperature_2m_min[index]
+      ),
+      rainProb: Math.round(
+        data.daily.precipitation_probability_max[index] || 0
+      )
+    };
+  });
+
+  const district =
+    locationInfo.district ||
+    locationInfo.name ||
+    'Current Location';
+
+  const state =
+    locationInfo.state ||
+    locationInfo.admin1 ||
+    '';
 
   return {
-    location: displayLocation,
+    location: state
+      ? `${district}, ${state}`
+      : district,
+
     state,
     district,
-    temperature: currentTemp,
-    humidity: humidity,
-    rainProbability: rainProb,
-    windSpeed: windSpeed,
-    uvIndex: uvIndex,
-    condition: 'Scattered Showers',
-    sunrise,
-    sunset,
-    farmingAdvice,
-    alerts,
+
+    latitude,
+    longitude,
+
+    temperature: Math.round(
+      data.current.temperature_2m
+    ),
+
+    humidity: Math.round(
+      data.current.relative_humidity_2m
+    ),
+
+    rainProbability: Math.round(
+      data.hourly.precipitation_probability[startIndex] || 0
+    ),
+
+    windSpeed: Math.round(
+      data.current.wind_speed_10m
+    ),
+
+    uvIndex: Math.round(
+      data.current.uv_index || 0
+    ),
+
+    condition: currentWeather.condition,
+
+    sunrise: formatTime(data.daily.sunrise[0]),
+    sunset: formatTime(data.daily.sunset[0]),
+
+    farmingAdvice: [
+      'Check the latest rainfall probability before irrigation or spraying.',
+      'Avoid chemical spraying during rain or strong winds.',
+      'Monitor crop leaves for fungal disease when humidity remains high.'
+    ],
+
+    alerts: [],
+
     hourlyForecast,
     weeklyForecast
   };
 }
 
-module.exports = { getWeatherForLocation };
+async function getWeatherForLocation(
+  state = 'Andhra Pradesh',
+  district = 'Guntur',
+  lat,
+  lng
+) {
+  // GPS has priority over manually selected location.
+  if (
+    Number.isFinite(Number(lat)) &&
+    Number.isFinite(Number(lng))
+  ) {
+    return getWeatherForCoordinates(lat, lng);
+  }
+
+  // Otherwise convert selected district/state into coordinates.
+  const location = await geocodeLocation(state, district);
+
+  return getWeatherForCoordinates(
+    location.latitude,
+    location.longitude,
+    {
+      district: location.name || district,
+      state: location.admin1 || state
+    }
+  );
+}
+
+module.exports = {
+  getWeatherForLocation,
+  getWeatherForCoordinates
+};

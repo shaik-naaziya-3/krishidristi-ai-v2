@@ -1,306 +1,1010 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { weatherAPI } from '../services/api';
-import { WeatherData } from '../types';
-import { 
-  CloudSun, MapPin, Navigation, Thermometer, Droplets, 
-  CloudRain, Wind, Sun, Sunrise, Sunset, ShieldAlert, Sparkles, RefreshCw 
+import React, { useEffect, useState } from 'react';
+import {
+  CloudRain,
+  Droplets,
+  Wind,
+  Sun,
+  CloudSun,
+  Cloud,
+  CloudDrizzle,
+  CloudLightning,
+  MapPin,
+  RefreshCw,
+  Loader2,
+  Navigation
 } from 'lucide-react';
 
+
+import { weatherAPI } from '../services/api';
+import { useTranslation } from 'react-i18next';
+
+interface WeatherData {
+  location: string;
+  state?: string;
+  district?: string;
+  latitude?: number;
+  longitude?: number;
+
+  temperature: number;
+  humidity: number;
+  rainProbability: number;
+  windSpeed: number;
+  uvIndex: number;
+  condition: string;
+
+  sunrise?: string;
+  sunset?: string;
+
+  farmingAdvice: string[];
+  alerts: string[];
+
+  hourlyForecast: Array<{
+    time: string;
+    temp: number;
+    rainProb: number;
+    icon: string;
+  }>;
+
+  weeklyForecast: Array<{
+    day: string;
+    condition: string;
+    tempMax: number;
+    tempMin: number;
+    rainProb: number;
+  }>;
+}
+
+interface GPSLocation {
+  latitude: number;
+  longitude: number;
+}
+
 const INDIAN_STATES_DISTRICTS: Record<string, string[]> = {
-  'Andhra Pradesh': ['Guntur', 'Kurnool', 'Anantapur', 'Vijayawada', 'Visakhapatnam', 'Chittoor'],
-  'Telangana': ['Warangal', 'Nizamabad', 'Karimnagar', 'Hyderabad', 'Khammam'],
-  'Karnataka': ['Kolar', 'Shivamogga', 'Chitradurga', 'Bengaluru Rural', 'Belagavi'],
-  'Tamil Nadu': ['Erode', 'Tiruchirappalli', 'Coimbatore', 'Madurai', 'Salem'],
-  'Kerala': ['Wayanad', 'Kottayam', 'Idukki', 'Palakkad', 'Alappuzha'],
-  'Maharashtra': ['Nashik', 'Latur', 'Pune', 'Nagpur', 'Solapur']
+  'Andhra Pradesh': [
+    'Anakapalli',
+    'Anantapur',
+    'Bapatla',
+    'Chittoor',
+    'East Godavari',
+    'Eluru',
+    'Guntur',
+    'Kakinada',
+    'Krishna',
+    'Kurnool',
+    'Nandyal',
+    'Nellore',
+    'Palnadu',
+    'Prakasam',
+    'Srikakulam',
+    'Tirupati',
+    'Visakhapatnam',
+    'Vizianagaram',
+    'West Godavari'
+  ],
+
+  Telangana: [
+    'Adilabad',
+    'Hyderabad',
+    'Jagtial',
+    'Jangaon',
+    'Jayashankar Bhupalpally',
+    'Jogulamba Gadwal',
+    'Kamareddy',
+    'Karimnagar',
+    'Khammam',
+    'Komaram Bheem Asifabad',
+    'Mahabubabad',
+    'Mahbubnagar',
+    'Mancherial',
+    'Medak',
+    'Medchal-Malkajgiri',
+    'Mulugu',
+    'Nagarkurnool',
+    'Nalgonda',
+    'Nirmal',
+    'Nizamabad',
+    'Peddapalli',
+    'Rajanna Sircilla',
+    'Rangareddy',
+    'Sangareddy',
+    'Siddipet',
+    'Suryapet',
+    'Vikarabad',
+    'Wanaparthy',
+    'Warangal',
+    'Yadadri Bhuvanagiri'
+  ],
+
+  Karnataka: [
+    'Bagalkot',
+    'Ballari',
+    'Belagavi',
+    'Bengaluru Rural',
+    'Bengaluru Urban',
+    'Bidar',
+    'Chamarajanagar',
+    'Chikkaballapur',
+    'Chikkamagaluru',
+    'Chitradurga',
+    'Dakshina Kannada',
+    'Davanagere',
+    'Dharwad',
+    'Gadag',
+    'Hassan',
+    'Haveri',
+    'Kalaburagi',
+    'Kodagu',
+    'Kolar',
+    'Koppal',
+    'Mandya',
+    'Mysuru',
+    'Raichur',
+    'Ramanagara',
+    'Shivamogga',
+    'Tumakuru',
+    'Udupi',
+    'Uttara Kannada',
+    'Vijayapura',
+    'Yadgir'
+  ],
+
+  'Tamil Nadu': [
+    'Ariyalur',
+    'Chengalpattu',
+    'Chennai',
+    'Coimbatore',
+    'Cuddalore',
+    'Dharmapuri',
+    'Dindigul',
+    'Erode',
+    'Kallakurichi',
+    'Kanchipuram',
+    'Kanyakumari',
+    'Karur',
+    'Krishnagiri',
+    'Madurai',
+    'Mayiladuthurai',
+    'Nagapattinam',
+    'Namakkal',
+    'Nilgiris',
+    'Perambalur',
+    'Pudukkottai',
+    'Ramanathapuram',
+    'Ranipet',
+    'Salem',
+    'Sivaganga',
+    'Tenkasi',
+    'Thanjavur',
+    'Theni',
+    'Thoothukudi',
+    'Tiruchirappalli',
+    'Tirunelveli',
+    'Tirupathur',
+    'Tiruppur',
+    'Tiruvallur',
+    'Tiruvannamalai',
+    'Tiruvarur',
+    'Vellore',
+    'Viluppuram',
+    'Virudhunagar'
+  ],
+
+  Kerala: [
+    'Alappuzha',
+    'Ernakulam',
+    'Idukki',
+    'Kannur',
+    'Kasaragod',
+    'Kollam',
+    'Kottayam',
+    'Kozhikode',
+    'Malappuram',
+    'Palakkad',
+    'Pathanamthitta',
+    'Thiruvananthapuram',
+    'Thrissur',
+    'Wayanad'
+  ],
+
+  Maharashtra: [
+    'Ahmednagar',
+    'Akola',
+    'Amravati',
+    'Aurangabad',
+    'Beed',
+    'Bhandara',
+    'Buldhana',
+    'Chandrapur',
+    'Dhule',
+    'Gadchiroli',
+    'Gondia',
+    'Hingoli',
+    'Jalgaon',
+    'Jalna',
+    'Kolhapur',
+    'Latur',
+    'Mumbai City',
+    'Mumbai Suburban',
+    'Nagpur',
+    'Nanded',
+    'Nandurbar',
+    'Nashik',
+    'Osmanabad',
+    'Palghar',
+    'Parbhani',
+    'Pune',
+    'Raigad',
+    'Ratnagiri',
+    'Sangli',
+    'Satara',
+    'Sindhudurg',
+    'Solapur',
+    'Thane',
+    'Wardha',
+    'Washim',
+    'Yavatmal'
+  ]
 };
 
-export const WeatherPage: React.FC = () => {
-  const { t } = useTranslation();
+const WeatherPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
 
-  const [selectedState, setSelectedState] = useState<string>('Andhra Pradesh');
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('Guntur');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [locating, setLocating] = useState<boolean>(false);
 
-  useEffect(() => {
-    fetchWeather(selectedState, selectedDistrict);
-  }, [selectedState, selectedDistrict]);
+  const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
 
-  const fetchWeather = async (st: string, dist: string, lat?: number, lng?: number) => {
-    setLoading(true);
+  const [gpsLocation, setGpsLocation] =
+    useState<GPSLocation | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const getLocationName = async (
+    latitude: number,
+    longitude: number
+  ) => {
     try {
-      const res = await weatherAPI.getWeather(st, dist, lat, lng);
-      setWeather(res.data);
-    } catch (err) {
-      console.warn('Weather fetch error:', err);
+      const url = new URL(
+        'https://api.bigdatacloud.net/data/reverse-geocode-client'
+      );
+
+      url.searchParams.set(
+        'latitude',
+        latitude.toString()
+      );
+
+      url.searchParams.set(
+        'longitude',
+        longitude.toString()
+      );
+
+      url.searchParams.set(
+        'localityLanguage',
+        'en'
+      );
+
+      const response = await fetch(url.toString());
+
+      if (!response.ok) {
+        throw new Error(
+          'Reverse geocoding failed'
+        );
+      }
+
+      const data = await response.json();
+
+      const city =
+        data.city ||
+        data.locality ||
+        data.localityInfo?.administrative?.[3]?.name ||
+        data.principalSubdivision ||
+        'Current Location';
+
+      const state =
+        data.principalSubdivision || '';
+
+      return {
+        city,
+        state
+      };
+    } catch (error) {
+      console.warn(
+        'Location name lookup failed:',
+        error
+      );
+
+      return {
+        city: 'Current Location',
+        state: ''
+      };
+    }
+  };
+
+  const fetchWeather = async (
+    state: string,
+    district: string,
+    lat?: number,
+    lng?: number
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response =
+        await weatherAPI.getWeather(
+          state,
+          district,
+          lat,
+          lng
+        );
+
+      setWeather(response.data);
+
+    } catch (err: any) {
+      console.error(
+        'Weather fetch error:',
+        err
+      );
+
+      setError(
+        err?.response?.data?.message ||
+        'Unable to fetch weather data.'
+      );
+
+      setWeather(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const st = e.target.value;
-    setSelectedState(st);
-    const districts = INDIAN_STATES_DISTRICTS[st] || [];
-    setSelectedDistrict(districts[0] || '');
-  };
-
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert(
+        'Geolocation is not supported by your browser.'
+      );
       return;
     }
 
     setLocating(true);
+    setError(null);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false);
-        const { latitude, longitude } = pos.coords;
-        fetchWeather(selectedState, selectedDistrict, latitude, longitude);
+      async (pos) => {
+        try {
+          const {
+            latitude,
+            longitude
+          } = pos.coords;
+
+          setGpsLocation({
+            latitude,
+            longitude
+          });
+
+          const locationInfo =
+            await getLocationName(
+              latitude,
+              longitude
+            );
+
+          const response =
+            await weatherAPI.getWeather(
+              selectedState,
+              selectedDistrict,
+              latitude,
+              longitude
+            );
+
+          setWeather({
+            ...response.data,
+
+            location:
+              locationInfo.state
+                ? `${locationInfo.city}, ${locationInfo.state}`
+                : locationInfo.city,
+
+            latitude,
+            longitude
+          });
+
+        } catch (err: any) {
+          console.error(
+            'GPS weather error:',
+            err
+          );
+
+          setError(
+            'Could not get weather for your current location.'
+          );
+
+          alert(
+            'Could not get weather for your current location.'
+          );
+        } finally {
+          setLocating(false);
+        }
       },
-      (error) => {
+
+      (geoError) => {
         setLocating(false);
-        console.warn('GPS location error:', error.message);
-        alert('Could not access GPS location. Using state/district selection instead.');
+
+        console.warn(
+          'GPS location error:',
+          geoError.message
+        );
+
+        let message =
+          'Could not access your location. Please allow location permission and try again.';
+
+        if (
+          geoError.code ===
+          geoError.PERMISSION_DENIED
+        ) {
+          message =
+            'Location permission was denied. Please allow location access for localhost.';
+        }
+
+        if (
+          geoError.code ===
+          geoError.POSITION_UNAVAILABLE
+        ) {
+          message =
+            'Your current location could not be determined.';
+        }
+
+        if (
+          geoError.code ===
+          geoError.TIMEOUT
+        ) {
+          message =
+            'Location request timed out. Please try again.';
+        }
+
+        setError(message);
+        alert(message);
       },
-      { timeout: 10000 }
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
     );
   };
 
-  const availableDistricts = INDIAN_STATES_DISTRICTS[selectedState] || [];
+  useEffect(() => {
+    if (!selectedState || !selectedDistrict) {
+      return;
+    }
 
-  // Translation helpers
-  const translatedState = t(`data.states.${selectedState}`, { defaultValue: selectedState });
-  const translatedDistrict = t(`data.districts.${selectedDistrict}`, { defaultValue: selectedDistrict });
-  const translatedLocation = weather ? `${translatedDistrict}, ${translatedState}` : '';
+    // Once the user manually selects a location,
+    // use the selected state/district.
+    setGpsLocation(null);
 
-  const translatedCondition = weather ? t(`data.weatherConditions.${weather.condition}`, { defaultValue: weather.condition }) : '';
+    fetchWeather(
+      selectedState,
+      selectedDistrict
+    );
+  }, [
+    selectedState,
+    selectedDistrict
+  ]);
 
-  const translatedAdviceObj = t('data.weatherAdvice', { returnObjects: true });
-  const adviceList: string[] = (Array.isArray(translatedAdviceObj) && translatedAdviceObj.length > 0)
-    ? (translatedAdviceObj as string[])
-    : (weather?.farmingAdvice || []);
+  const getWeatherIcon = (
+    condition: string,
+    size = 40
+  ) => {
+    const value =
+      condition.toLowerCase();
 
-  const translatedAlertsObj = t('data.weatherAlerts', { returnObjects: true });
-  const alertList: any[] = (Array.isArray(translatedAlertsObj) && translatedAlertsObj.length > 0)
-    ? (translatedAlertsObj as any[])
-    : (weather?.alerts || []);
+    if (
+      value.includes('thunder') ||
+      value.includes('storm')
+    ) {
+      return (
+        <CloudLightning size={size} />
+      );
+    }
+
+    if (
+      value.includes('rain') ||
+      value.includes('drizzle') ||
+      value.includes('shower')
+    ) {
+      return (
+        <CloudRain size={size} />
+      );
+    }
+
+    if (
+      value.includes('cloud')
+    ) {
+      return (
+        <CloudSun size={size} />
+      );
+    }
+
+    if (
+      value.includes('clear') ||
+      value.includes('sun')
+    ) {
+      return (
+        <Sun size={size} />
+      );
+    }
+
+    return (
+      <Cloud size={size} />
+    );
+  };
+
+  const translatedLocation =
+    weather?.location || '';
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 py-4 px-2 sm:px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       
-      {/* Page Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold uppercase tracking-wider">
-          <CloudSun className="w-4 h-4" />
-          <span>{t('weather.badge')}</span>
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
-          {t('weather.title')}
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          {t('weather.subtitle')}
-        </p>
-      </div>
 
-      {/* Location Selector Bar */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto flex-1">
-          {/* Select State */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
-              {t('weather.selectState')}
-            </label>
-            <select
-              value={selectedState}
-              onChange={handleStateChange}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-            >
-              {Object.keys(INDIAN_STATES_DISTRICTS).map((st) => (
-                <option key={st} value={st}>
-                  {t(`data.states.${st}`, { defaultValue: st })}
-                </option>
-              ))}
-            </select>
-          </div>
+      <main className="max-w-7xl mx-auto px-4 py-6">
 
-          {/* Select District */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
-              {t('weather.selectDistrict')}
-            </label>
-            <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-            >
-              {availableDistricts.map((dist) => (
-                <option key={dist} value={dist}>
-                  {t(`data.districts.${dist}`, { defaultValue: dist })}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* PAGE HEADER */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {t('weather.title', {
+              defaultValue: 'Weather Forecast'
+            })}
+          </h1>
 
-        {/* GPS Button */}
-        <div className="w-full sm:w-auto pt-2 sm:pt-4">
-          <button
-            onClick={handleDetectGPS}
-            disabled={locating}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 disabled:opacity-50"
-          >
-            {locating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-            <span>{locating ? t('weather.locating') : t('weather.useGps')}</span>
-          </button>
-        </div>
-
-      </div>
-
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-            {t('weather.loading')}
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
+            {t('weather.subtitle', {
+              defaultValue:
+                'Get real-time weather information for farming decisions.'
+            })}
           </p>
         </div>
-      )}
 
-      {!loading && weather && (
-        <div className="space-y-6">
-          
-          {/* Main Weather Card */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-amber-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl">
-            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        {/* LOCATION CONTROLS */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 mb-6">
 
-            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{translatedLocation || weather.location}</span>
-                </div>
-                <h2 className="text-4xl sm:text-6xl font-black tracking-tight">
-                  {weather.temperature}°C
-                </h2>
-                <p className="text-lg font-bold text-amber-100">
-                  {translatedCondition || weather.condition}
-                </p>
-              </div>
+          <div className="flex flex-col md:flex-row gap-3">
 
-              {/* Sunrise & Sunset */}
-              <div className="flex items-center gap-6 bg-black/20 p-4 rounded-2xl backdrop-blur-md border border-white/10 text-xs font-bold">
-                <div className="flex items-center gap-2">
-                  <Sunrise className="w-6 h-6 text-amber-200" />
-                  <div>
-                    <span className="block text-[10px] text-amber-200/80 font-medium uppercase">{t('weather.sunrise')}</span>
-                    <span>{weather.sunrise || '06:12 AM'}</span>
-                  </div>
-                </div>
-                <div className="h-8 w-px bg-white/20"></div>
-                <div className="flex items-center gap-2">
-                  <Sunset className="w-6 h-6 text-orange-200" />
-                  <div>
-                    <span className="block text-[10px] text-orange-200/80 font-medium uppercase">{t('weather.sunset')}</span>
-                    <span>{weather.sunset || '06:48 PM'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* STATE */}
+            <select
+              value={selectedState}
+              onChange={(e) => {
+                setSelectedState(
+                  e.target.value
+                );
+                setSelectedDistrict('');
+                setWeather(null);
+                setError(null);
+              }}
+              className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none"
+            >
+              <option value="">
+                Select State
+              </option>
 
-            {/* Weather Metrics Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/20 text-center">
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md">
-                <Droplets className="w-5 h-5 mx-auto mb-1 text-sky-200" />
-                <span className="text-[10px] block text-amber-100 font-medium uppercase">{t('weather.humidity')}</span>
-                <span className="text-lg font-black">{weather.humidity}%</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md">
-                <CloudRain className="w-5 h-5 mx-auto mb-1 text-blue-200" />
-                <span className="text-[10px] block text-amber-100 font-medium uppercase">{t('weather.rainProb')}</span>
-                <span className="text-lg font-black">{weather.rainProbability}%</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md">
-                <Wind className="w-5 h-5 mx-auto mb-1 text-emerald-200" />
-                <span className="text-[10px] block text-amber-100 font-medium uppercase">{t('weather.windSpeed')}</span>
-                <span className="text-lg font-black">{weather.windSpeed} km/h</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md">
-                <Sun className="w-5 h-5 mx-auto mb-1 text-yellow-200" />
-                <span className="text-[10px] block text-amber-100 font-medium uppercase">{t('weather.uvIndex')}</span>
-                <span className="text-lg font-black">{weather.uvIndex} / 10</span>
-              </div>
-            </div>
-          </div>
+              {Object.keys(
+                INDIAN_STATES_DISTRICTS
+              ).map((state) => (
+                <option
+                  key={state}
+                  value={state}
+                >
+                  {state}
+                </option>
+              ))}
+            </select>
 
-          {/* Smart Weather Farming Advice Card */}
-          {adviceList && adviceList.length > 0 && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-black text-sm uppercase tracking-wider">
-                <Sparkles className="w-5 h-5 text-amber-500" />
-                <span>{t('weather.adviceTitle')}</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {adviceList.map((adv, idx) => (
-                  <div key={idx} className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-slate-800/60 border border-emerald-100 dark:border-slate-700/60 text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <span>{adv}</span>
-                  </div>
+            {/* DISTRICT */}
+            <select
+              value={selectedDistrict}
+              onChange={(e) => {
+                setSelectedDistrict(
+                  e.target.value
+                );
+              }}
+              disabled={!selectedState}
+              className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none disabled:opacity-50"
+            >
+              <option value="">
+                Select District
+              </option>
+
+              {selectedState &&
+                INDIAN_STATES_DISTRICTS[
+                  selectedState
+                ]?.map((district) => (
+                  <option
+                    key={district}
+                    value={district}
+                  >
+                    {district}
+                  </option>
                 ))}
-              </div>
-            </div>
-          )}
+            </select>
 
-          {/* Weather Alerts */}
-          {alertList && alertList.length > 0 && (
-            <div className="space-y-3">
-              {alertList.map((alert, idx) => (
-                <div key={idx} className="p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-start gap-4">
-                  <ShieldAlert className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 text-xs">
-                    <h4 className="font-extrabold text-amber-900 dark:text-amber-200 text-sm">
-                      {alert.title}
-                    </h4>
-                    <p className="text-amber-800/90 dark:text-amber-300/90 leading-relaxed font-medium">
-                      {alert.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Weekly Forecast */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
-              {t('weather.weeklyTitle')}
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-              {weather.weeklyForecast.map((day, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 text-center space-y-2 border border-slate-100 dark:border-slate-700/60">
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 block">
-                    {t(`data.days.${day.day}`, { defaultValue: day.day })}
-                  </span>
-                  <CloudSun className="w-6 h-6 mx-auto text-amber-500" />
-                  <span className="text-[11px] text-slate-500 font-bold block">
-                    {t(`data.weatherConditions.${day.condition}`, { defaultValue: day.condition })}
-                  </span>
-                  <div className="text-xs font-black text-slate-900 dark:text-slate-100 pt-1">
-                    {day.tempMax}° <span className="text-slate-400 text-[10px] font-normal">{day.tempMin}°</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* GPS */}
+            <button
+              onClick={handleDetectGPS}
+              disabled={locating}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-60"
+            >
+              {locating ? (
+                <>
+                  <Loader2
+                    size={20}
+                    className="animate-spin"
+                  />
+                  Detecting...
+                </>
+              ) : (
+                <>
+                  <Navigation size={20} />
+                  Detect GPS Location
+                </>
+              )}
+            </button>
           </div>
 
-        </div>
-      )}
+          {gpsLocation && (
+            <div className="mt-3 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <MapPin size={16} />
 
+              GPS:
+              {gpsLocation.latitude.toFixed(5)},
+              {gpsLocation.longitude.toFixed(5)}
+            </div>
+          )}
+        </div>
+
+        {/* ERROR */}
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* INITIAL STATE */}
+        {!weather &&
+          !loading &&
+          !error && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-10 text-center">
+
+              <MapPin
+                size={48}
+                className="mx-auto mb-4 text-green-600"
+              />
+
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Select a location
+              </h2>
+
+              <p className="mt-2 text-gray-500 dark:text-gray-400">
+                Select a state and district,
+                or use GPS to get weather for
+                your current location.
+              </p>
+            </div>
+          )}
+
+        {/* LOADING */}
+        {loading && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center">
+
+            <Loader2
+              size={48}
+              className="mx-auto mb-4 animate-spin text-green-600"
+            />
+
+            <p className="text-gray-600 dark:text-gray-300">
+              Loading weather data...
+            </p>
+          </div>
+        )}
+
+        {/* WEATHER */}
+        {weather && !loading && (
+          <>
+            {/* CURRENT WEATHER */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
+
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+                <div>
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-2">
+                    <MapPin size={20} />
+
+                    <span>
+                      {translatedLocation}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-5">
+
+                    <div className="text-6xl font-bold text-gray-900 dark:text-white">
+                      {weather.temperature}°C
+                    </div>
+
+                    <div>
+                      <div className="text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                        {getWeatherIcon(
+                          weather.condition,
+                          30
+                        )}
+
+                        {weather.condition}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() =>
+                    weather.latitude !==
+                      undefined &&
+                    weather.longitude !==
+                      undefined
+                      ? handleDetectGPS()
+                      : fetchWeather(
+                          selectedState,
+                          selectedDistrict
+                        )
+                  }
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <RefreshCw size={18} />
+                  Refresh
+                </button>
+              </div>
+
+              {/* WEATHER STATS */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+
+                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+                  <div className="flex items-center gap-2 text-blue-600 mb-2">
+                    <Droplets size={20} />
+                    Humidity
+                  </div>
+
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {weather.humidity}%
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20">
+                  <div className="flex items-center gap-2 text-sky-600 mb-2">
+                    <CloudRain size={20} />
+                    Rain Probability
+                  </div>
+
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {weather.rainProbability}%
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/40">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 mb-2">
+                    <Wind size={20} />
+                    Wind
+                  </div>
+
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {weather.windSpeed} km/h
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
+                  <div className="flex items-center gap-2 text-yellow-600 mb-2">
+                    <Sun size={20} />
+                    UV Index
+                  </div>
+
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {weather.uvIndex}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* HOURLY FORECAST */}
+            {weather.hourlyForecast?.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
+
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Hourly Forecast
+                </h2>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+
+                  {weather.hourlyForecast.map(
+                    (item, index) => (
+                      <div
+                        key={index}
+                        className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/40 text-center"
+                      >
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {item.time}
+                        </div>
+
+                        <div className="flex justify-center my-3 text-green-600">
+                          {getWeatherIcon(
+                            item.icon,
+                            30
+                          )}
+                        </div>
+
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">
+                          {item.temp}°C
+                        </div>
+
+                        <div className="text-xs text-blue-600 mt-1">
+                          Rain {item.rainProb}%
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* WEEKLY FORECAST */}
+            {weather.weeklyForecast?.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
+
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  7-Day Forecast
+                </h2>
+
+                <div className="space-y-3">
+
+                  {weather.weeklyForecast.map(
+                    (item, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/40"
+                      >
+                        <div className="w-24 font-medium text-gray-900 dark:text-white">
+                          {item.day}
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="text-green-600">
+                            {getWeatherIcon(
+                              item.condition,
+                              30
+                            )}
+                          </div>
+
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {item.condition}
+                          </span>
+                        </div>
+
+                        <div className="text-gray-900 dark:text-white font-semibold">
+                          {item.tempMax}° /
+                          {item.tempMin}°
+                        </div>
+
+                        <div className="text-blue-600 text-sm">
+                          Rain {item.rainProb}%
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SUNRISE / SUNSET */}
+            {(weather.sunrise ||
+              weather.sunset) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                  <div className="flex items-center gap-3">
+                    <Sun
+                      size={32}
+                      className="text-yellow-500"
+                    />
+
+                    <div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Sunrise
+                      </div>
+
+                      <div className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {weather.sunrise}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                  <div className="flex items-center gap-3">
+                    <Sun
+                      size={32}
+                      className="text-orange-500"
+                    />
+
+                    <div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Sunset
+                      </div>
+
+                      <div className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {weather.sunset}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FARMING ADVICE */}
+            {weather.farmingAdvice?.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
+
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Farming Advice
+                </h2>
+
+                <div className="space-y-3">
+
+                  {weather.farmingAdvice.map(
+                    (advice, index) => (
+                      <div
+                        key={index}
+                        className="flex gap-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20"
+                      >
+                        <div className="text-green-600 font-bold">
+                          ✓
+                        </div>
+
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {advice}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ALERTS */}
+            {weather.alerts?.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
+
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Farming Alerts
+                </h2>
+
+                <div className="space-y-3">
+
+                  {weather.alerts.map(
+                    (alert, index) => (
+                      <div
+                        key={index}
+                        className="p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 text-gray-700 dark:text-gray-300"
+                      >
+                        {alert}
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+
+      
     </div>
   );
 };
+
+export { WeatherPage };
