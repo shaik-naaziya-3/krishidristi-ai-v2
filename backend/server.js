@@ -21,7 +21,14 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors({ origin: '*' }));
+const clientUrl = process.env.CLIENT_URL;
+const corsOptions = {
+  origin: clientUrl && clientUrl.trim() !== '' && clientUrl !== '*'
+    ? [clientUrl, 'http://localhost:5173', 'http://localhost:3000']
+    : '*',
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 

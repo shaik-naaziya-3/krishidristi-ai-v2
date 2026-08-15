@@ -71,7 +71,7 @@ export const NearbyShopsPage: React.FC = () => {
 
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert(t('weather.geoNotSupported', { defaultValue: 'Geolocation is not supported by your browser.' }));
       return;
     }
 
@@ -85,7 +85,7 @@ export const NearbyShopsPage: React.FC = () => {
       (error) => {
         setLocating(false);
         console.warn('GPS error:', error.message);
-        alert('Could not detect GPS location. Showing shops for selected area.');
+        alert(t('shops.geoError', { defaultValue: 'Could not detect GPS location. Showing shops for selected area.' }));
       },
       { timeout: 10000 }
     );

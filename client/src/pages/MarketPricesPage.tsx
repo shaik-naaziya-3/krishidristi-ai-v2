@@ -74,6 +74,29 @@ export const MarketPricesPage: React.FC = () => {
     ? locations[selectedState].districts[selectedDistrict].markets || []
     : [];
 
+  // Format arrival quantity and update date with i18n translation keys
+  const formatArrivalQty = (qtyStr?: string) => {
+    if (!qtyStr) return '-';
+    const match = qtyStr.match(/^(\d+)\s+(.*)$/);
+    if (match) {
+      const num = match[1];
+      const unit = match[2].trim().toLowerCase();
+      if (unit === 'quintals' || unit === 'quintal') return `${num} ${t('market.quintals')}`;
+      if (unit === 'bags' || unit === 'bag') return `${num} ${t('market.bags')}`;
+      if (unit === 'boxes' || unit === 'box') return `${num} ${t('market.boxes')}`;
+      if (unit === 'bunch' || unit === 'bunches') return `${num} ${t('market.bunch')}`;
+    }
+    return qtyStr;
+  };
+
+  const formatUpdated = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const lower = dateStr.trim().toLowerCase();
+    if (lower === 'today') return t('market.today');
+    if (lower === 'yesterday') return t('market.yesterday');
+    return dateStr;
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 py-4 px-2 sm:px-4">
       
@@ -272,8 +295,8 @@ export const MarketPricesPage: React.FC = () => {
 
                   {/* Additional Details */}
                   <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <span>📦 {t('market.arrivalQty')}: <strong className="text-slate-800 dark:text-slate-200">{item.arrivalQuantity || 'N/A'}</strong></span>
-                    <span>🗓️ {t('market.lastUpdated')}: <strong className="text-slate-800 dark:text-slate-200">{item.updated}</strong></span>
+                    <span>📦 {t('market.arrivalQty')}: <strong className="text-slate-800 dark:text-slate-200">{formatArrivalQty(item.arrivalQuantity)}</strong></span>
+                    <span>🗓️ {t('market.lastUpdated')}: <strong className="text-slate-800 dark:text-slate-200">{formatUpdated(item.updated)}</strong></span>
                   </div>
                 </div>
               );
@@ -310,8 +333,8 @@ export const MarketPricesPage: React.FC = () => {
                     <td className="py-4 px-4 text-right font-medium">₹{p.minPrice.toLocaleString()}</td>
                     <td className="py-4 px-4 text-right font-medium">₹{p.maxPrice.toLocaleString()}</td>
                     <td className="py-4 px-4 text-right font-black text-emerald-600 dark:text-emerald-400 text-sm">₹{p.modalPrice.toLocaleString()}</td>
-                    <td className="py-4 px-4 text-center font-medium text-slate-500">{p.arrivalQuantity || '-'}</td>
-                    <td className="py-4 px-6 text-right text-slate-400 font-medium">{p.updated}</td>
+                    <td className="py-4 px-4 text-center font-medium text-slate-500">{formatArrivalQty(p.arrivalQuantity)}</td>
+                    <td className="py-4 px-6 text-right text-slate-400 font-medium">{formatUpdated(p.updated)}</td>
                   </tr>
                 ))}
               </tbody>

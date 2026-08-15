@@ -64,7 +64,7 @@ export const HelplinePage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{contact.title}</h3>
                 <span className="text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full">
-                  Toll Free
+                  {t('helpline.tollFree', { defaultValue: 'Toll Free' })}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">

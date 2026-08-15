@@ -16,12 +16,16 @@ exports.getWeather = async (req, res) => {
     const userState =
       state ||
       (req.user && req.user.state) ||
-      'Andhra Pradesh';
+      '';
 
     const userDistrict =
       district ||
       (req.user && req.user.district) ||
-      'Guntur';
+      '';
+
+    if (!userState && !userDistrict && (lat === undefined || lng === undefined || lat === '' || lng === '')) {
+      return res.json(null);
+    }
 
     const weatherData = await getWeatherForLocation(
       userState,

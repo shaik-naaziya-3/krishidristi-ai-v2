@@ -1,16 +1,49 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { WeatherData } from '../types';
-import { CloudSun, CloudRain, Droplets, Wind, AlertTriangle } from 'lucide-react';
+import { CloudSun, CloudRain, Droplets, Wind, AlertTriangle, MapPin, Navigation, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface WeatherWidgetProps {
   weather: WeatherData | null;
+  onDetectGPS?: () => void;
+  locating?: boolean;
 }
 
-export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather }) => {
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, onDetectGPS, locating }) => {
   const { t } = useTranslation();
 
-  if (!weather) return null;
+  if (!weather) {
+    return (
+      <div className="bg-gradient-to-br from-emerald-900 via-green-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-center space-y-4 min-h-[220px]">
+        <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-amber-300">
+          <MapPin className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-white">{t('dashboard.selectLocation', { defaultValue: 'Select your location' })}</h3>
+          <p className="text-xs text-emerald-200/80 mt-1 max-w-xs">{t('weather.subtitle', { defaultValue: 'Select location in profile or detect GPS for weather updates' })}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {onDetectGPS && (
+            <button
+              onClick={onDetectGPS}
+              disabled={locating}
+              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+              <span>{t('dashboard.detectGps', { defaultValue: 'Detect GPS Location' })}</span>
+            </button>
+          )}
+          <Link
+            to="/weather"
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+          >
+            {t('nav.weather', { defaultValue: 'Weather' })}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-emerald-900 via-green-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
@@ -20,7 +53,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather }) => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider block">{t('weather.liveForecast')}</span>
-          <h3 className="text-lg font-bold text-white">{weather.location}</h3>
+          <h3 className="text-lg font-bold text-white">{t(`data.districts.${weather.district}`, { defaultValue: weather.district }) || weather.location}</h3>
         </div>
         <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-amber-300">
           <CloudSun className="w-7 h-7" />
@@ -30,7 +63,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather }) => {
       {/* Main Temperature Display */}
       <div className="flex items-baseline gap-2 mb-6">
         <span className="text-5xl font-black text-white tracking-tight">{weather.temperature}°C</span>
-        <span className="text-sm font-semibold text-emerald-200">{weather.condition}</span>
+        <span className="text-sm font-semibold text-emerald-200">{t(`weather.conditions.${weather.condition}`, { defaultValue: weather.condition })}</span>
       </div>
 
       {/* Metrics Grid */}

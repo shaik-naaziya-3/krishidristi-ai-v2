@@ -152,57 +152,126 @@ const mockDiseaseDatabase = [
   }
 ];
 
-// Helper to analyze leaf image with Gemini Vision or Fallback
-async function analyzeCropDisease(imageBase64, mimeType = 'image/jpeg', userLang = 'en') {
-  if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      const prompt = `You are KrishiDrishti AI, a top agricultural scientist and plant pathologist. 
-Analyze this crop leaf image and identify any disease or health issue. 
-Return your response STRICTLY as a valid JSON object with the following fields:
-{
-  "cropName": "Name of the crop",
-  "diseaseName": "Name of the disease (or Healthy Plant if no disease)",
-  "confidenceScore": 92,
-  "severityLevel": "Low | Moderate | High | Critical",
-  "diseaseDescription": "2-3 sentences explaining the condition",
-  "symptoms": ["symptom 1", "symptom 2", "symptom 3"],
-  "possibleCauses": ["cause 1", "cause 2"],
-  "chemicalTreatment": ["chemical step 1", "chemical step 2"],
-  "organicTreatment": ["organic remedy 1", "organic remedy 2"],
-  "fertilizerRecommendations": ["fertilizer advice 1", "fertilizer advice 2"],
-  "preventionMethods": ["prevention step 1", "prevention step 2"],
-  "futurePrecautions": ["future step 1"],
-  "weatherImpact": "Explanation of how temperature and rain affect this condition",
-  "recoverySuggestions": "Practical action plan for farmer recovery",
-  "smartRecommendations": ["smart tip 1", "smart tip 2"]
-}
-Respond in clear farmer-friendly language.`;
-
-      const imagePart = {
-        inlineData: {
-          data: imageBase64,
-          mimeType: mimeType
-        }
-      };
-
-      const result = await model.generateContent([prompt, imagePart]);
-      const text = result.response.text();
-      // Extract JSON from output
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-    } catch (error) {
-      console.warn('[Gemini Analysis Fallback]: Error calling Gemini API:', error.message);
-    }
+// Helper to analyze leaf image with Gemini Vision
+// Temporary disease detector.
+// This will later be replaced by the trained ML model.
+async function analyzeCropDisease(
+  imageBase64,
+  mimeType = 'image/jpeg',
+  userLang = 'en'
+) {
+  if (!genAI) {
+    throw new Error(
+      'Crop disease analysis service is unavailable.'
+    );
   }
 
-  // Pick realistic fallback item from database
-  const randomIndex = Math.floor(Math.random() * mockDiseaseDatabase.length);
-  return mockDiseaseDatabase[randomIndex];
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash'
+    });
+
+    const languageMap = {
+      en: 'English',
+      te: 'Telugu',
+      hi: 'Hindi',
+      ta: 'Tamil',
+      kn: 'Kannada',
+      ml: 'Malayalam'
+    };
+
+    const selectedLanguage =
+      languageMap[userLang] || 'English';
+
+    const prompt = `You are KrishiDrishti AI, an agricultural assistant for Indian farmers.
+
+Analyze the supplied crop leaf image.
+
+IMPORTANT RULES:
+1. Do not randomly guess a disease.
+2. If the image is unclear or the crop/disease cannot be identified reliably, return "Unknown".
+3. Do not invent symptoms, causes, treatment, or prevention information.
+4. Return ONLY valid JSON.
+5. confidenceScore must be between 0 and 100.
+6. ALL human-readable values in the response MUST be written in ${selectedLanguage}.
+7. Keep scientific disease names in their commonly recognized form when necessary, but explain them in ${selectedLanguage}.
+8. The response must be suitable for a farmer.
+
+Return exactly this JSON structure:
+
+{
+  "cropName": "Crop name or Unknown",
+  "diseaseName": "Disease name or Unknown",
+  "confidenceScore": 0,
+  "severityLevel": "Low | Moderate | High | Critical | Unknown",
+  "diseaseDescription": "Short explanation",
+  "symptoms": [],
+  "possibleCauses": [],
+  "chemicalTreatment": [],
+  "organicTreatment": [],
+  "fertilizerRecommendations": [],
+  "preventionMethods": [],
+  "futurePrecautions": [],
+  "weatherImpact": "",
+  "recoverySuggestions": "",
+  "smartRecommendations": []
 }
 
+Selected farmer language:
+${selectedLanguage}`;
+
+    const imagePart = {
+      inlineData: {
+        data: imageBase64,
+        mimeType
+      }
+    };
+
+    const result = await model.generateContent([
+      prompt,
+      imagePart
+    ]);
+
+    const text = result.response.text();
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
+      throw new Error(
+        'Invalid analysis response received from AI.'
+      );
+    }
+
+    const report = JSON.parse(jsonMatch[0]);
+
+    // Validate confidence score
+    const confidence = Number(report.confidenceScore);
+
+    if (
+      !Number.isFinite(confidence) ||
+      confidence < 0 ||
+      confidence > 100
+    ) {
+      report.confidenceScore = 0;
+    } else {
+      report.confidenceScore = confidence;
+    }
+
+    return report;
+
+  } catch (error) {
+    console.error(
+      '[Crop Analysis Error]:',
+      error.message
+    );
+
+    // IMPORTANT:
+    // Never return a random disease.
+    throw new Error(
+      'Unable to reliably analyze this crop image. Please upload a clear leaf image and try again.'
+    );
+  }
+}
 // Helper to generate AI chatbot responses
 async function generateFarmingChatResponse(userMessage, conversationHistory = [], userLang = 'en') {
   if (genAI) {

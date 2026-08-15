@@ -22,6 +22,7 @@ export const Dashboard: React.FC = () => {
   const [shops, setShops] = useState<AgriShop[]>([]);
   const [_loading, setLoading] = useState(true);
   const [savedTip, setSavedTip] = useState(false);
+  const [locatingGPS, setLocatingGPS] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -30,15 +31,20 @@ export const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
+      const activeState = user?.state || '';
+      const activeDist = user?.district || '';
+
       const [wRes, mRes, sRes, schRes, shRes] = await Promise.all([
-        weatherAPI.getWeather(user?.state, user?.district),
-        marketAPI.getPrices('', user?.state || ''),
+        activeState && activeDist
+          ? weatherAPI.getWeather(activeState, activeDist).catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
+        marketAPI.getPrices('', activeState).catch(() => ({ data: { data: [] } })),
         scanAPI.getHistory().catch(() => ({ data: [] })),
-        schemeAPI.getSchemes(),
-        shopAPI.getShops('All')
+        schemeAPI.getSchemes().catch(() => ({ data: [] })),
+        shopAPI.getShops(activeState, activeDist).catch(() => ({ data: [] }))
       ]);
 
-      setWeather(wRes.data);
+      setWeather(wRes?.data || null);
       setMarketPrices(mRes.data?.data || []);
       setScanReports(sRes.data || []);
       setSchemes(schRes.data || []);
@@ -49,6 +55,42 @@ export const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      alert(t('weather.geoNotSupported', { defaultValue: 'Geolocation is not supported by your browser.' }));
+      return;
+    }
+
+    setLocatingGPS(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const wRes = await weatherAPI.getWeather('', '', latitude, longitude);
+          if (wRes?.data) {
+            setWeather(wRes.data);
+          }
+        } catch (err) {
+          console.warn('GPS weather error:', err);
+        } finally {
+          setLocatingGPS(false);
+        }
+      },
+      (geoErr) => {
+        setLocatingGPS(false);
+        alert(t('shops.geoError', { defaultValue: 'Could not detect GPS location.' }));
+      },
+      { timeout: 10000 }
+    );
+  };
+
+  const userName = user?.name || t('dashboard.farmerFallback', { defaultValue: 'Farmer' });
+  const locationDisplay = user?.state && user?.district
+    ? `${t(`data.districts.${user.district}`, { defaultValue: user.district })}, ${t(`data.states.${user.state}`, { defaultValue: user.state })}`
+    : weather?.location
+      ? weather.location
+      : t('dashboard.selectLocation', { defaultValue: 'Select your location' });
 
   return (
     <div className="space-y-8 py-4">
@@ -61,10 +103,10 @@ export const Dashboard: React.FC = () => {
             <span>{t('dashboard.badge')}</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-            {t('dashboard.welcome')}, {user?.name || 'Farmer'}! 👋
+            {t('dashboard.greeting', { name: userName, defaultValue: `Namaste, ${userName}! 👋` })}
           </h1>
           <p className="text-xs sm:text-sm text-emerald-100/90 font-medium">
-            {t('dashboard.location')}: <span className="font-bold">{user?.district || 'Guntur'}, {user?.state || 'Andhra Pradesh'}</span> | {t('dashboard.preferredLang')}: <span className="uppercase font-bold">{i18n.language}</span>
+            {t('dashboard.location')}: <span className="font-bold">{locationDisplay}</span> | {t('dashboard.preferredLang')}: <span className="uppercase font-bold">{i18n.language}</span>
           </p>
         </div>
 
@@ -84,7 +126,7 @@ export const Dashboard: React.FC = () => {
         
         {/* Weather Widget */}
         <div className="lg:col-span-1">
-          <WeatherWidget weather={weather} />
+          <WeatherWidget weather={weather} onDetectGPS={handleDetectGPS} locating={locatingGPS} />
         </div>
 
         {/* Daily Tip & Smart Recommendations */}
@@ -195,7 +237,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center gap-2 text-[10px] text-slate-500">
                     <span className="font-semibold text-emerald-600">{report.confidenceScore}% {t('dashboard.confidence')}</span>
                     <span>•</span>
-                    <span className="capitalize">{report.severityLevel}</span>
+                    <span className="capitalize">{t(`severity.${report.severityLevel}`, { defaultValue: report.severityLevel })}</span>
                   </div>
                 </div>
               </div>
@@ -226,7 +268,7 @@ export const Dashboard: React.FC = () => {
             {shops.slice(0, 3).map((shop) => (
               <div key={shop.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">{shop.name}</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">{t(`data.shops.${shop.id}`, { defaultValue: shop.name })}</span>
                   <div className="flex items-center gap-1 text-[11px] text-slate-500">
                     <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
                     <span>{shop.address} ({shop.distance})</span>
@@ -259,9 +301,9 @@ export const Dashboard: React.FC = () => {
           {schemes.slice(0, 3).map((scheme) => (
             <div key={scheme.schemeId} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block mb-1">{scheme.category}</span>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{scheme.title}</h4>
-                <p className="text-xs text-slate-500 line-clamp-2 mt-1">{scheme.overview}</p>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block mb-1">{t(`schemes.categories.${scheme.category}`, { defaultValue: scheme.category })}</span>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{t(`data.schemes.${scheme.schemeId}.title`, { defaultValue: scheme.title })}</h4>
+                <p className="text-xs text-slate-500 line-clamp-2 mt-1">{t(`data.schemes.${scheme.schemeId}.overview`, { defaultValue: scheme.overview })}</p>
               </div>
               <a
                 href={scheme.officialUrl}

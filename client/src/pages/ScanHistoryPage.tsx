@@ -71,7 +71,7 @@ export const ScanHistoryPage: React.FC = () => {
                   <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                     <span>{report.confidenceScore}% {t('scanner.confidence')}</span>
                     <span>•</span>
-                    <span className="capitalize">{report.severityLevel} {t('scanner.severity')}</span>
+                    <span className="capitalize">{t(`severity.${report.severityLevel}`, { defaultValue: report.severityLevel })} {t('scanner.severity')}</span>
                   </div>
                 </div>
               </div>

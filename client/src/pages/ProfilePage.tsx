@@ -188,7 +188,7 @@ export const ProfilePage: React.FC = () => {
               onClick={toggleLargeText}
               className={`px-4 py-2 rounded-xl text-xs font-bold ${largeText ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`}
             >
-              {largeText ? 'Enabled' : 'Disabled'}
+              {largeText ? t('accessibility.enabled', { defaultValue: 'Enabled' }) : t('accessibility.disabled', { defaultValue: 'Disabled' })}
             </button>
           </div>
 
@@ -200,7 +200,7 @@ export const ProfilePage: React.FC = () => {
               onClick={toggleHighContrast}
               className={`px-4 py-2 rounded-xl text-xs font-bold ${highContrast ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`}
             >
-              {highContrast ? 'Enabled' : 'Disabled'}
+              {highContrast ? t('accessibility.enabled', { defaultValue: 'Enabled' }) : t('accessibility.disabled', { defaultValue: 'Disabled' })}
             </button>
           </div>
         </div>

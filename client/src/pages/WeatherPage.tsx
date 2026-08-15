@@ -363,7 +363,7 @@ const WeatherPage: React.FC = () => {
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
       alert(
-        'Geolocation is not supported by your browser.'
+        t('weather.geoNotSupported', { defaultValue: 'Geolocation is not supported by your browser.' })
       );
       return;
     }
@@ -417,11 +417,11 @@ const WeatherPage: React.FC = () => {
           );
 
           setError(
-            'Could not get weather for your current location.'
+            t('weather.geoError', { defaultValue: 'Could not get weather for your current location.' })
           );
 
           alert(
-            'Could not get weather for your current location.'
+            t('weather.geoError', { defaultValue: 'Could not get weather for your current location.' })
           );
         } finally {
           setLocating(false);
@@ -585,7 +585,7 @@ const WeatherPage: React.FC = () => {
               className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none"
             >
               <option value="">
-                Select State
+                {t('weather.selectState', { defaultValue: 'Select State' })}
               </option>
 
               {Object.keys(
@@ -595,7 +595,7 @@ const WeatherPage: React.FC = () => {
                   key={state}
                   value={state}
                 >
-                  {state}
+                  {t(`data.states.${state}`, { defaultValue: state })}
                 </option>
               ))}
             </select>
@@ -612,7 +612,7 @@ const WeatherPage: React.FC = () => {
               className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none disabled:opacity-50"
             >
               <option value="">
-                Select District
+                {t('weather.selectDistrict', { defaultValue: 'Select District' })}
               </option>
 
               {selectedState &&
@@ -623,7 +623,7 @@ const WeatherPage: React.FC = () => {
                     key={district}
                     value={district}
                   >
-                    {district}
+                    {t(`data.districts.${district}`, { defaultValue: district })}
                   </option>
                 ))}
             </select>
@@ -640,12 +640,12 @@ const WeatherPage: React.FC = () => {
                     size={20}
                     className="animate-spin"
                   />
-                  Detecting...
+                  {t('weather.detecting', { defaultValue: 'Detecting...' })}
                 </>
               ) : (
                 <>
                   <Navigation size={20} />
-                  Detect GPS Location
+                  {t('weather.detectGps', { defaultValue: 'Detect GPS Location' })}
                 </>
               )}
             </button>
@@ -681,13 +681,11 @@ const WeatherPage: React.FC = () => {
               />
 
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Select a location
+                {t('weather.selectLocation', { defaultValue: 'Select a location' })}
               </h2>
 
               <p className="mt-2 text-gray-500 dark:text-gray-400">
-                Select a state and district,
-                or use GPS to get weather for
-                your current location.
+                {t('weather.subtitle', { defaultValue: 'Select a state and district, or use GPS to get weather for your current location.' })}
               </p>
             </div>
           )}
@@ -702,7 +700,7 @@ const WeatherPage: React.FC = () => {
             />
 
             <p className="text-gray-600 dark:text-gray-300">
-              Loading weather data...
+              {t('weather.loading', { defaultValue: 'Loading weather data...' })}
             </p>
           </div>
         )}
@@ -737,7 +735,7 @@ const WeatherPage: React.FC = () => {
                           30
                         )}
 
-                        {weather.condition}
+                        {t(`weather.conditions.${weather.condition}`, { defaultValue: weather.condition })}
                       </div>
                     </div>
                   </div>
@@ -758,7 +756,7 @@ const WeatherPage: React.FC = () => {
                   className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <RefreshCw size={18} />
-                  Refresh
+                  {t('weather.refresh', { defaultValue: 'Refresh' })}
                 </button>
               </div>
 
@@ -768,7 +766,7 @@ const WeatherPage: React.FC = () => {
                 <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20">
                   <div className="flex items-center gap-2 text-blue-600 mb-2">
                     <Droplets size={20} />
-                    Humidity
+                    {t('weather.humidity', { defaultValue: 'Humidity' })}
                   </div>
 
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -779,7 +777,7 @@ const WeatherPage: React.FC = () => {
                 <div className="p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20">
                   <div className="flex items-center gap-2 text-sky-600 mb-2">
                     <CloudRain size={20} />
-                    Rain Probability
+                    {t('weather.rainProbability', { defaultValue: 'Rain Probability' })}
                   </div>
 
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -790,7 +788,7 @@ const WeatherPage: React.FC = () => {
                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/40">
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 mb-2">
                     <Wind size={20} />
-                    Wind
+                    {t('weather.wind', { defaultValue: 'Wind' })}
                   </div>
 
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -801,7 +799,7 @@ const WeatherPage: React.FC = () => {
                 <div className="p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
                   <div className="flex items-center gap-2 text-yellow-600 mb-2">
                     <Sun size={20} />
-                    UV Index
+                    {t('weather.uvIndex', { defaultValue: 'UV Index' })}
                   </div>
 
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -816,7 +814,7 @@ const WeatherPage: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
 
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Hourly Forecast
+                  {t('weather.hourlyForecast', { defaultValue: 'Hourly Forecast' })}
                 </h2>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
@@ -843,7 +841,7 @@ const WeatherPage: React.FC = () => {
                         </div>
 
                         <div className="text-xs text-blue-600 mt-1">
-                          Rain {item.rainProb}%
+                          {t('weather.rain', { defaultValue: 'Rain' })} {item.rainProb}%
                         </div>
                       </div>
                     )
@@ -857,7 +855,7 @@ const WeatherPage: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
 
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  7-Day Forecast
+                  {t('weather.weeklyForecast', { defaultValue: '7-Day Forecast' })}
                 </h2>
 
                 <div className="space-y-3">
@@ -869,7 +867,7 @@ const WeatherPage: React.FC = () => {
                         className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/40"
                       >
                         <div className="w-24 font-medium text-gray-900 dark:text-white">
-                          {item.day}
+                          {t(`weather.days.${item.day.toLowerCase()}`, { defaultValue: item.day })}
                         </div>
 
                         <div className="flex items-center gap-3 flex-1">
@@ -881,7 +879,7 @@ const WeatherPage: React.FC = () => {
                           </div>
 
                           <span className="text-gray-600 dark:text-gray-300">
-                            {item.condition}
+                            {t(`weather.conditions.${item.condition}`, { defaultValue: item.condition })}
                           </span>
                         </div>
 
@@ -891,7 +889,7 @@ const WeatherPage: React.FC = () => {
                         </div>
 
                         <div className="text-blue-600 text-sm">
-                          Rain {item.rainProb}%
+                          {t('weather.rain', { defaultValue: 'Rain' })} {item.rainProb}%
                         </div>
                       </div>
                     )
@@ -914,7 +912,7 @@ const WeatherPage: React.FC = () => {
 
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Sunrise
+                        {t('weather.sunrise', { defaultValue: 'Sunrise' })}
                       </div>
 
                       <div className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -933,7 +931,7 @@ const WeatherPage: React.FC = () => {
 
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Sunset
+                        {t('weather.sunset', { defaultValue: 'Sunset' })}
                       </div>
 
                       <div className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -950,7 +948,7 @@ const WeatherPage: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
 
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Farming Advice
+                  {t('weather.farmingAdvice', { defaultValue: 'Farming Advice' })}
                 </h2>
 
                 <div className="space-y-3">
@@ -980,7 +978,7 @@ const WeatherPage: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
 
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Farming Alerts
+                  {t('weather.alerts', { defaultValue: 'Farming Alerts' })}
                 </h2>
 
                 <div className="space-y-3">
