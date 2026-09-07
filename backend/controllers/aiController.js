@@ -739,10 +739,19 @@ const analyzeCrop = async (req, res) => {
       '../../ml/predict.py'
     );
 
-    const pythonExecutable = path.join(
-      __dirname,
-      '../../ml/.venv/Scripts/python.exe'
-    );
+    const venvWinPath = path.join(__dirname, '../../ml/.venv/Scripts/python.exe');
+    const venvLinuxPath = path.join(__dirname, '../../ml/.venv/bin/python');
+
+    let pythonExecutable = process.env.PYTHON_PATH || process.env.PYTHON_EXECUTABLE;
+    if (!pythonExecutable) {
+      if (process.platform === 'win32' && fs.existsSync(venvWinPath)) {
+        pythonExecutable = venvWinPath;
+      } else if (fs.existsSync(venvLinuxPath)) {
+        pythonExecutable = venvLinuxPath;
+      } else {
+        pythonExecutable = process.platform === 'win32' ? 'python' : 'python3';
+      }
+    }
 
     const pythonProcess = spawn(
       pythonExecutable,
