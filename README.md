@@ -1,344 +1,131 @@
-# 🌾 KrishiDrishti AI
-### AI-Powered Multilingual Smart Farming Assistant
+# KrishiDrishti AI 3.0 — Multilingual Voice-Enabled Smart Farming Assistant
 
-KrishiDrishti AI is a full-stack AI-powered smart farming platform designed to assist Indian farmers with crop disease detection, weather forecasting, market prices, government schemes, nearby agricultural shops, and multilingual AI assistance.
+[![Python](https://img.shields.io/badge/PyTorch-2.13.0-orange.svg)](https://pytorch.org/)
+[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue.svg)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-4.19.2-lightgrey.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green.svg)](https://www.mongodb.com/)
 
-The platform combines Artificial Intelligence, real-time agricultural data, multilingual accessibility, and voice interaction to help farmers make informed decisions regardless of their language or technical expertise.
-
----
-
-# 🚀 Features
-
-## 🌱 AI Crop Disease Detection
-
-- Upload crop leaf images
-- AI-powered disease identification
-- Disease confidence score
-- Symptoms analysis
-- Chemical treatment suggestions
-- Organic treatment recommendations
-- Preventive measures
-- Crop health insights
+**KrishiDrishti AI 3.0** is a lightweight, explainable, multimodal, multilingual, and environment-aware agricultural decision-support platform designed for Indian smallholder and commercial farmers.
 
 ---
 
-## 🤖 AI Farming Assistant
+## Key Features
 
-An intelligent chatbot powered by Google's Gemini AI capable of answering agriculture-related questions such as:
-
-- Crop cultivation
-- Fertilizer recommendations
-- Pest management
-- Irrigation guidance
-- Seasonal farming advice
-- Organic farming
-- Soil management
-- Government schemes
-- Market-related queries
-
-The assistant communicates in the user's selected language.
-
----
-
-## 🌦 Smart Weather Module
-
-Provides weather information relevant to agriculture.
-
-Features include:
-
-- Current weather
-- Temperature
-- Humidity
-- Wind speed
-- Rain probability
-- Weather alerts
-- Sunrise & Sunset
-- Farming recommendations based on weather
-- Location-based forecasts
-
-Designed specifically to help farmers plan irrigation, spraying, harvesting, and other farming activities.
+1. **AI Crop Leaf Scanner**: Instant disease detection for Tomato, Potato, and Bell Pepper powered by PyTorch MobileNetV3-Small (96.58% validation accuracy).
+2. **Grad-CAM Explainable AI**: Visual heatmap exhibits (`[Original Image | Grad-CAM Heatmap]`) highlighting exact leaf lesions driving the neural network diagnosis.
+3. **Confidence Safety Thresholding**: Automatically flags predictions under 60% confidence as `Low Confidence`, asking the farmer for a photo recapture to prevent improper pesticide usage.
+4. **Multimodal Environmental Disease Risk Fusion**: Combines live weather parameters (temperature, humidity, precipitation forecast) with crop pathology to calculate environmental risk scores and weather advisories.
+5. **6-Language Multilingual Support**: Dynamic i18n localization across English (`en`), Telugu (`te`), Hindi (`hi`), Tamil (`ta`), Kannada (`kn`), and Malayalam (`ml`).
+6. **Voice Assistant & Read Aloud**: Speech Recognition voice commands and SpeechSynthesis (TTS) read-page capabilities.
+7. **Live Weather Center**: Integrated Open-Meteo weather forecasts, hourly/weekly forecasts, UV index, and spraying advisories.
+8. **Mandi Market Prices**: Real-time arrival rates, daily price trends, state/district filters, and commodity tracking.
+9. **Government Support Schemes**: Catalog of central & state agricultural welfare programs (PM-KISAN, PMFBY, KCC).
+10. **Nearby Agricultural Shops**: Geolocation locator for certified fertilizer, seed, and pesticide stores.
+11. **Persistent Scan History**: MongoDB storage for saved crop pathology reports.
+12. **Farmer Accessibility**: Farmer Mode, Large Text Mode, High Contrast Mode, and Dark Theme.
 
 ---
 
-## 📈 Market Prices
+## Technology Stack
 
-Real-time agricultural market information.
-
-Features:
-
-- State selection
-- District selection
-- Market/Mandi selection
-- Crop-wise market prices
-- Minimum price
-- Maximum price
-- Modal price
-- Arrival quantity
-- Last updated information
-- Localized interface in multiple languages
-
-This enables farmers to compare prices across different markets and make better selling decisions.
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + i18next + Lucide Icons
+- **Backend**: Node.js + Express.js + Mongoose + JWT Auth + Multer
+- **Database**: MongoDB Atlas
+- **Machine Learning**: Python + PyTorch + torchvision + scikit-learn + NumPy + PIL
+- **Weather API**: Open-Meteo Forecast & Geocoding API
+- **AI Vision Model**: MobileNetV3-Small (5.95 MB FP32 / 4.24 MB INT8 Quantized)
 
 ---
 
-## 🏛 Government Schemes
+## Project Architecture
 
-Provides information about agricultural welfare schemes.
-
-Includes:
-
-- PM-KISAN
-- PMFBY
-- Fertilizer subsidies
-- Irrigation schemes
-- Crop insurance
-- State-specific schemes
-- Eligibility
-- Required documents
-- Benefits
-- Official application links
-
----
-
-## 🏪 Nearby Agricultural Shops
-
-Helps farmers locate nearby:
-
-- Seed shops
-- Fertilizer shops
-- Pesticide stores
-- Agricultural equipment stores
-
-Supports:
-
-- State selection
-- District selection
-- Place selection
-- Location-based search
-- Google Maps integration
-- Contact information
-
----
-
-## 🎙 Voice Assistant
-
-Hands-free interaction using speech technologies.
-
-Features:
-
-- Speech Recognition
-- Speech Synthesis
-- Voice responses
-- Multilingual conversations
-- AI-generated farming guidance
-
----
-
-## 🔊 Read Page (Accessibility)
-
-Reads the current page aloud using Text-to-Speech.
-
-Supports:
-
-- English
-- Telugu
-- Hindi
-- Tamil
-- Kannada
-- Malayalam
-
-Improves accessibility for farmers who have difficulty reading text.
-
----
-
-## 🌍 Multilingual Support
-
-Supports six Indian languages:
-
-- 🇬🇧 English
-- 🇮🇳 Telugu
-- 🇮🇳 Hindi
-- 🇮🇳 Tamil
-- 🇮🇳 Kannada
-- 🇮🇳 Malayalam
-
-The selected language is applied across:
-
-- Navigation
-- Buttons
-- Cards
-- Weather
-- Market Prices
-- Government Schemes
-- Shops
-- AI Assistant
-- Voice Assistant
-- Read Page
-
----
-
-## 📱 Responsive Design
-
-Optimized for:
-
-- Desktop
-- Tablets
-- Mobile Devices
-
-Designed with a farmer-friendly interface featuring large buttons, simple navigation, and clean layouts.
-
----
-
-# 🏗 Project Architecture
-
-```
-KrishiDrishti_AI/
-│
-├── client/
-│   ├── React
-│   ├── TypeScript
-│   ├── Vite
-│   ├── Tailwind CSS
-│   ├── React Router
-│   ├── i18next
-│   └── UI Components
-│
-├── backend/
-│   ├── Node.js
-│   ├── Express.js
-│   ├── API Routes
-│   ├── AI Integration
-│   └── External Services
-│
-└── README.md
+```text
+FARMER / USER
+     │
+     ├── 📷 Leaf Photo Upload / Camera Snapshot
+     ├── 🎤 Native Voice Commands / TTS Speech
+     └── 📍 GPS Geolocation
+     │
+     ▼
+REACT FRONTEND (Vite + TypeScript + i18n)
+     │
+     ▼ REST API
+NODE.JS / EXPRESS BACKEND SERVER (Port 5000)
+     │
+     ├── Python Subprocess Spawn (predict.py)
+     │        │
+     │        ▼
+     │   PyTorch MobileNetV3-Small CNN Classifier
+     │        │
+     │        ├─► Prediction & Confidence Scoring
+     │        └─► PyTorch Grad-CAM Heatmap Generator (gradcam.py)
+     │
+     ├── Multimodal Environmental Risk Engine (environmentalRiskService.js)
+     │        │
+     │        └─► Open-Meteo Weather API Integration
+     │
+     └── Persistence Layer (MongoDB Atlas)
+              │
+              └─► Users & ScanReport Schemas
 ```
 
 ---
 
-# 🛠 Tech Stack
+## Installation & Setup Guide
 
-## Frontend
+### 1. Prerequisites
+- Node.js (v18+)
+- Python (v3.10+)
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- Framer Motion
-- React Icons
-- i18next
+### 2. Environment Setup
 
-## Backend
+Create `.env` file in `backend/`:
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/krishidrishti
+JWT_SECRET=your_secret_key
+```
 
-- Node.js
-- Express.js
-- REST APIs
-
-## AI
-
-- Google Gemini API
-
-## Speech Technologies
-
-- Web Speech API
-- Speech Recognition
-- Speech Synthesis
-
-## APIs
-
-- Gemini API
-- Weather API
-- Market Price API
-- Government Schemes API
-- Geolocation API
-- Google Maps Integration
-
----
-
-# ⭐ Key Highlights
-
-- AI-powered crop disease diagnosis
-- Multilingual support for Indian farmers
-- Voice-enabled farming assistance
-- Accessibility with Read Page
-- Real-time weather insights
-- Live market price tracking
-- Government welfare schemes
-- Nearby agricultural shop locator
-- Responsive modern UI
-- Modular full-stack architecture
-
----
-
-# Installation
-
-## Clone Repository
-
+### 3. Backend Setup
 ```bash
-git clone <repository-url>
+cd backend
+npm install
+npm run dev
 ```
 
-## Client
-
+### 4. Frontend Setup
 ```bash
 cd client
 npm install
 npm run dev
 ```
 
-## Backend
-
+### 5. Python ML Environment
 ```bash
-cd backend
-npm install
-npm start
+cd ml
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
 ---
 
-# Environment Variables
+## Model Evaluation & Quantization Commands
 
-Client
-
+### Run Standalone Validation Evaluation
+```bash
+.\ml\.venv\Scripts\python.exe ml\evaluate.py
 ```
-VITE_GEMINI_API_KEY=YOUR_API_KEY
-```
 
-Backend
-
-```
-PORT=5000
-GEMINI_API_KEY=YOUR_API_KEY
+### Run PyTorch INT8 Quantization Benchmark
+```bash
+.\ml\.venv\Scripts\python.exe ml\benchmark.py
 ```
 
 ---
 
-# Future Enhancements
-
-- User Authentication
-- Farmer Dashboard
-- Crop History
-- Image History
-- AI Yield Prediction
-- Pest Outbreak Prediction
-- Soil Analysis
-- Satellite Monitoring
-- Offline Mode
-- Push Notifications
-- Voice Commands
-- Regional Dialect Support
-- Market Price Analytics
-- Crop Recommendation System
-- IoT Sensor Integration
-
----
-
-# Team
-
-Developed as an academic full-stack project to improve digital agriculture through Artificial Intelligence, multilingual accessibility, and farmer-centric design.
-
----
-
-# License
-
-This project is developed for educational and research purposes.
+## Documentation Links
+- [`MODEL_CARD.md`](file:///c:/Users/SHAIK%20NAAZIYA/OneDrive/Desktop/KrishiDristi_AI_v2/MODEL_CARD.md) — Model card, training metrics, safety rules.
+- [`TESTING_REPORT.md`](file:///c:/Users/SHAIK%20NAAZIYA/OneDrive/Desktop/KrishiDristi_AI_v2/TESTING_REPORT.md) — Complete automated test suite report.
+- [`SIH_DEMO_GUIDE.md`](file:///c:/Users/SHAIK%20NAAZIYA/OneDrive/Desktop/KrishiDristi_AI_v2/SIH_DEMO_GUIDE.md) — Hackathon pitch, live demo script, judge Q&A defense points.

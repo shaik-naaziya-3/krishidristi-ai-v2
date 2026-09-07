@@ -37,9 +37,24 @@ export const CropScanner: React.FC = () => {
 
   const handleCameraCapture = (base64Image: string) => {
     setImagePreview(base64Image);
-    setSelectedFile(null);
     setReport(null);
     setError(null);
+    try {
+      const arr = base64Image.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const bstr = atob(arr[1] || arr[0]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const file = new File([u8arr], `camera_${Date.now()}.jpg`, { type: mime });
+      setSelectedFile(file);
+    } catch (e) {
+      console.warn('Base64 conversion failed:', e);
+      setSelectedFile(null);
+    }
   };
 
   const handleAnalyze = async () => {
@@ -71,7 +86,8 @@ export const CropScanner: React.FC = () => {
       }
     } catch (err: any) {
       console.warn('AI Analysis Error:', err);
-      setError(t('scanner.analysisError'));
+      const serverMessage = err?.response?.data?.message || err?.response?.data?.error;
+      setError(serverMessage || t('scanner.analysisError'));
     } finally {
       setAnalyzing(false);
     }
@@ -207,6 +223,30 @@ export const CropScanner: React.FC = () => {
       {report && (
         <div className="space-y-6 animate-fadeIn">
           
+          {/* Low Confidence Safety Warning Banner */}
+          {report.isLowConfidence && (
+            <div className="p-5 rounded-3xl bg-amber-500/15 border-2 border-amber-500/60 text-amber-900 dark:text-amber-200 space-y-2 shadow-lg">
+              <div className="flex items-center gap-2 font-black text-base text-amber-700 dark:text-amber-300">
+                <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+                <span>{t('scanner.lowConfidenceAlert', 'Low Confidence Prediction Warning')} ({report.confidenceScore}%)</span>
+              </div>
+              <p className="text-xs font-semibold leading-relaxed">
+                {report.lowConfidenceWarning || t('scanner.lowConfidenceMsg', 'The AI model confidence is under 60%. Please capture a clearer, well-lit leaf image focusing closely on the affected lesion area, or consult an agricultural expert.')}
+              </p>
+              <button
+                onClick={() => {
+                  setImagePreview(null);
+                  setSelectedFile(null);
+                  setReport(null);
+                }}
+                className="mt-2 py-2 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all inline-flex items-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>{t('cameraModal.retakePhoto', 'Recapture Clearer Image')}</span>
+              </button>
+            </div>
+          )}
+
           {/* Main Diagnosis Summary Card */}
           <div className="bg-gradient-to-br from-emerald-900 via-green-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden">
             
@@ -218,8 +258,10 @@ export const CropScanner: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black text-xs">
-                  {report.confidenceScore}% {t('scanner.confidence')}
+                <span className={`px-3.5 py-1.5 rounded-full border font-black text-xs ${
+                  report.confidenceLevel === 'Low' ? 'bg-amber-500/20 border-amber-400/40 text-amber-300' : 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                }`}>
+                  {report.confidenceScore}% {report.confidenceLevel || 'High'} {t('scanner.confidence')}
                 </span>
                 <span className={`px-3.5 py-1.5 rounded-full text-xs font-black text-white ${
                   report.severityLevel === 'Critical' ? 'bg-rose-600' : report.severityLevel === 'High' ? 'bg-amber-600' : 'bg-emerald-600'
@@ -257,6 +299,86 @@ export const CropScanner: React.FC = () => {
             </div>
 
           </div>
+
+          {/* Grad-CAM AI Visual Explainability Heatmap Card */}
+          {report.heatmapUrl && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-4">
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-extrabold text-lg">
+                <Sparkles className="w-6 h-6 text-amber-500" />
+                <h3>{t('scanner.gradcamTitle', 'Grad-CAM AI Visual Explainability Heatmap')}</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                {t('scanner.gradcamSubtitle', 'The side-by-side visualization below highlights the precise leaf regions (Red/Yellow heat zones) that influenced the CNN model’s diagnostic prediction.')}
+              </p>
+              <div className="rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 p-2 flex justify-center">
+                <img
+                  src={report.heatmapUrl.startsWith('http') ? report.heatmapUrl : `http://localhost:5000${report.heatmapUrl}`}
+                  alt="Grad-CAM AI Heatmap Explanation"
+                  className="max-h-80 w-auto object-contain rounded-xl shadow-lg"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Environmental Disease Risk Multimodal Fusion Card */}
+          {report.environmentalRisk && (
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4 border border-indigo-900/50">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2 text-emerald-400 font-extrabold text-base">
+                  <CloudSun className="w-6 h-6 text-amber-400" />
+                  <h3>{t('scanner.environmentalRiskTitle', 'Environmental Disease Risk Fusion')}</h3>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                  report.environmentalRisk.environmentalRiskLevel === 'High' ? 'bg-rose-600 text-white' :
+                  report.environmentalRisk.environmentalRiskLevel === 'Moderate' ? 'bg-amber-500 text-slate-950' :
+                  'bg-emerald-600 text-white'
+                }`}>
+                  {report.environmentalRisk.environmentalRiskLevel} Risk ({report.environmentalRisk.riskScore}/100)
+                </span>
+              </div>
+
+              {/* Weather Context Badges */}
+              {report.environmentalRisk.weatherContext && (
+                <div className="grid grid-cols-3 gap-2 py-1">
+                  <div className="bg-white/5 rounded-xl p-2.5 text-center border border-white/10">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Temperature</span>
+                    <span className="text-sm font-black text-amber-300">{report.environmentalRisk.weatherContext.temperature}°C</span>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-2.5 text-center border border-white/10">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Humidity</span>
+                    <span className="text-sm font-black text-blue-300">{report.environmentalRisk.weatherContext.humidity}%</span>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-2.5 text-center border border-white/10">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Rain Chance</span>
+                    <span className="text-sm font-black text-cyan-300">{report.environmentalRisk.weatherContext.rainProbability}%</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Risk Factors List */}
+              {report.environmentalRisk.riskFactors && report.environmentalRisk.riskFactors.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Observed Environmental Risk Drivers</h4>
+                  <ul className="space-y-1.5">
+                    {report.environmentalRisk.riskFactors.map((factor, idx) => (
+                      <li key={idx} className="text-xs text-slate-200 flex items-start gap-2 bg-white/5 p-2 rounded-lg">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-1.5"></span>
+                        <span>{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Environmental Guidance */}
+              {report.environmentalRisk.environmentalAdvice && (
+                <div className="p-3.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-200 text-xs font-medium leading-relaxed">
+                  <span className="font-bold text-amber-300 block mb-1">Weather Advisory Recommendation:</span>
+                  {report.environmentalRisk.environmentalAdvice}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Treatment Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

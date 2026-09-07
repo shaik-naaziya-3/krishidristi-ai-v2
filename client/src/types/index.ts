@@ -21,9 +21,13 @@ export interface ScanReport {
   _id?: string;
   userId?: string;
   uploadedImage: string;
+  heatmapUrl?: string;
   cropName?: string;
   diseaseName: string;
   confidenceScore: number;
+  confidenceLevel?: 'Low' | 'Medium' | 'High';
+  isLowConfidence?: boolean;
+  lowConfidenceWarning?: string | null;
   severityLevel: 'Low' | 'Moderate' | 'High' | 'Critical';
   diseaseDescription: string;
   symptoms: string[];
@@ -36,6 +40,18 @@ export interface ScanReport {
   weatherImpact?: string;
   recoverySuggestions?: string;
   smartRecommendations: string[];
+  environmentalRisk?: {
+    environmentalRiskLevel: 'Low' | 'Moderate' | 'High';
+    riskScore: number;
+    riskFactors: string[];
+    environmentalAdvice: string;
+    weatherContext?: {
+      temperature: number;
+      humidity: number;
+      rainProbability: number;
+      condition: string;
+    };
+  };
   createdAt?: string;
 }
 
@@ -112,18 +128,22 @@ export interface GovernmentScheme {
 export interface AgriShop {
   id: string;
   name: string;
-  type: 'fertilizer_seed' | 'pesticides' | 'equipment' | 'general';
+  type: 'fertilizer_seed' | 'pesticides' | 'equipment' | 'general' | string;
   category?: string;
   state?: string;
   district?: string;
   place?: string;
+  town?: string;
   address: string;
-  distance: string;
-  rating: number;
-  reviewsCount: number;
-  contact: string;
-  timing: string;
-  lat: number;
-  lng: number;
-  mapsUrl: string;
+  distance?: string;
+  rating?: number;
+  reviewsCount?: number;
+  contact?: string;
+  phone?: string;
+  timing?: string;
+  timings?: string;
+  lat?: number;
+  lng?: number;
+  mapsUrl?: string;
+  dataSource?: 'verified' | 'sample' | 'live';
 }

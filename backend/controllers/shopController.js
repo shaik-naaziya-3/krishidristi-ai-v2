@@ -1,121 +1,150 @@
-const sampleShops = [
-  {
-    id: 's1',
-    name: 'Sri Lakshmi Agri Inputs & Fertilizer Store',
-    type: 'fertilizer_seed',
-    category: 'Fertilizers & Seeds',
-    state: 'Andhra Pradesh',
-    district: 'Guntur',
-    place: 'Guntur APMC Yard',
-    address: 'Main Road, Near APMC Market Yard, Guntur, AP 522001',
-    distance: '1.2 km',
-    rating: 4.8,
-    reviewsCount: 142,
-    contact: '+91 98480 12345',
-    timing: '08:00 AM - 08:00 PM',
-    lat: 16.3067,
-    lng: 80.4365,
-    mapsUrl: 'https://maps.google.com/?q=Sri+Lakshmi+Agri+Inputs+Guntur'
-  },
-  {
-    id: 's2',
-    name: 'Kisan Crop Protection & Pesticides Center',
-    type: 'pesticides',
-    category: 'Pesticides & Bio-fungicides',
-    state: 'Andhra Pradesh',
-    district: 'Guntur',
-    place: 'Station Road',
-    address: 'Station Road, Guntur, AP 522002',
-    distance: '2.5 km',
-    rating: 4.6,
-    reviewsCount: 98,
-    contact: '+91 94401 56789',
-    timing: '08:30 AM - 07:30 PM',
-    lat: 16.3120,
-    lng: 80.4410,
-    mapsUrl: 'https://maps.google.com/?q=Kisan+Crop+Protection+Guntur'
-  },
-  {
-    id: 's3',
-    name: 'Rythu Seva Kendram & Farm Equipment Store',
-    type: 'equipment',
-    category: 'Agricultural Equipment & Machinery',
-    state: 'Andhra Pradesh',
-    district: 'Guntur',
-    place: 'RTC Complex',
-    address: 'RTC Bus Stand Complex, Guntur, AP 522001',
-    distance: '3.1 km',
-    rating: 4.9,
-    reviewsCount: 215,
-    contact: '+91 91772 34567',
-    timing: '07:00 AM - 09:00 PM',
-    lat: 16.2990,
-    lng: 80.4280,
-    mapsUrl: 'https://maps.google.com/?q=Rythu+Seva+Kendram+Guntur'
-  },
-  {
-    id: 's4',
-    name: 'Jai Kisan Organic Fertilizers & Seeds Depot',
-    type: 'fertilizer_seed',
-    category: 'Organic Fertilizers & Bio-pesticides',
-    state: 'Telangana',
-    district: 'Warangal',
-    place: 'Enamamula Market Road',
-    address: 'Enamamula Market Road, Warangal, TS 506002',
-    distance: '2.8 km',
-    rating: 4.7,
-    reviewsCount: 112,
-    contact: '+91 98855 88990',
-    timing: '08:00 AM - 07:30 PM',
-    lat: 17.9784,
-    lng: 79.5941,
-    mapsUrl: 'https://maps.google.com/?q=Jai+Kisan+Organic+Warangal'
-  },
-  {
-    id: 's5',
-    name: 'Cauvery Agri Tech & Drip Equipment',
-    type: 'equipment',
-    category: 'Micro-Irrigation & Machinery',
-    state: 'Karnataka',
-    district: 'Kolar',
-    place: 'Kolar APMC Gate',
-    address: 'APMC Yard Gate, Kolar, KA 563101',
-    distance: '1.9 km',
-    rating: 4.8,
-    reviewsCount: 164,
-    contact: '+91 94802 33445',
-    timing: '08:00 AM - 08:00 PM',
-    lat: 13.1367,
-    lng: 78.1291,
-    mapsUrl: 'https://maps.google.com/?q=Cauvery+Agri+Tech+Kolar'
-  }
-];
+const fs = require('fs');
+const path = require('path');
+const AgriShop = require('../models/AgriShop');
 
-// @desc Get nearby agricultural shops
+// Load JSON dataset from disk
+const jsonPath = path.join(__dirname, '../data/agriShops.json');
+let jsonShops = [];
+try {
+  if (fs.existsSync(jsonPath)) {
+    const rawData = fs.readFileSync(jsonPath, 'utf8');
+    jsonShops = JSON.parse(rawData);
+  }
+} catch (err) {
+  console.warn('[ShopController] Could not read agriShops.json:', err.message);
+}
+
+// Calculate distance in kilometers using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (
+    lat1 === undefined || lat1 === null || isNaN(lat1) ||
+    lon1 === undefined || lon1 === null || isNaN(lon1) ||
+    lat2 === undefined || lat2 === null || isNaN(lat2) ||
+    lon2 === undefined || lon2 === null || isNaN(lon2)
+  ) {
+    return null;
+  }
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// @desc Get nearby agricultural shops with state, district, category, and GPS filtering
 // @route GET /api/shops
 exports.getNearbyShops = async (req, res) => {
   try {
-    const { category, type, state, district, place, lat, lng } = req.query;
-    let result = sampleShops;
+    const { category, type, state, district, place, search, lat, lng } = req.query;
+    let allShops = [];
 
-    const catFilter = category || type;
+    // Query MongoDB collection first if connected
+    try {
+      if (AgriShop.db && AgriShop.db.readyState === 1) {
+        allShops = await AgriShop.find({}).lean();
+      }
+    } catch (dbErr) {
+      console.warn('[ShopController] MongoDB query failed, using JSON fallback:', dbErr.message);
+    }
 
-    if (catFilter && catFilter !== 'all') {
-      result = result.filter(s => 
-        s.type.toLowerCase() === catFilter.toLowerCase() ||
-        s.category.toLowerCase().includes(catFilter.toLowerCase())
+    if (!allShops || allShops.length === 0) {
+      allShops = jsonShops;
+    }
+
+    let result = [...allShops];
+
+    // Filter by State
+    if (state) {
+      result = result.filter(s =>
+        s.state && (
+          s.state.toLowerCase() === state.toLowerCase() ||
+          s.state.toLowerCase().includes(state.toLowerCase())
+        )
       );
     }
 
-    if (state) {
-      result = result.filter(s => s.state.toLowerCase().includes(state.toLowerCase()));
-    }
+    // Filter by District
     if (district) {
-      result = result.filter(s => s.district.toLowerCase().includes(district.toLowerCase()));
+      result = result.filter(s =>
+        s.district && (
+          s.district.toLowerCase() === district.toLowerCase() ||
+          s.district.toLowerCase().includes(district.toLowerCase())
+        )
+      );
+    }
+
+    // Filter by Place/Town
+    if (place) {
+      result = result.filter(s =>
+        (s.place && s.place.toLowerCase().includes(place.toLowerCase())) ||
+        (s.town && s.town.toLowerCase().includes(place.toLowerCase())) ||
+        (s.address && s.address.toLowerCase().includes(place.toLowerCase()))
+      );
+    }
+
+    // Filter by Category/Type
+    const catFilter = category || type;
+    if (catFilter && catFilter !== 'all') {
+      result = result.filter(s =>
+        (s.type && s.type.toLowerCase() === catFilter.toLowerCase()) ||
+        (s.category && s.category.toLowerCase().includes(catFilter.toLowerCase()))
+      );
+    }
+
+    // Filter by Search Query
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(s =>
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.address && s.address.toLowerCase().includes(q)) ||
+        (s.district && s.district.toLowerCase().includes(q)) ||
+        (s.place && s.place.toLowerCase().includes(q))
+      );
+    }
+
+    // GPS Proximity Sorting & Distance calculation (ONLY if valid coordinates exist)
+    if (lat && lng) {
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lng);
+
+      if (!isNaN(userLat) && !isNaN(userLng)) {
+        result = result.map(shop => {
+          if (shop.lat !== undefined && shop.lng !== undefined) {
+            const distKm = calculateDistance(userLat, userLng, shop.lat, shop.lng);
+            if (distKm !== null && !isNaN(distKm)) {
+              return {
+                ...shop,
+                computedDist: distKm,
+                distance: `${distKm.toFixed(1)} km`
+              };
+            }
+          }
+          // Do NOT fabricate fake distance if coordinates are missing!
+          return {
+            ...shop,
+            computedDist: undefined,
+            distance: undefined
+          };
+        });
+
+        // Sort by computed distance
+        result.sort((a, b) => {
+          const dA = a.computedDist !== undefined ? a.computedDist : 99999;
+          const dB = b.computedDist !== undefined ? b.computedDist : 99999;
+          return dA - dB;
+        });
+      }
     }
 
     res.json(result);
   } catch (error) {
+    console.error('[ShopController Error]:', error);
     res.status(500).json({ message: error.message });
   }
 };

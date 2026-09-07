@@ -1,5 +1,34 @@
+const https = require('https');
 const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
 const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search';
+
+// Helper to make HTTPS requests with standard TLS certificate verification
+function fetchJsonSecure(urlStr) {
+  return new Promise((resolve, reject) => {
+    https.get(
+      urlStr,
+      { headers: { 'User-Agent': 'KrishiDrishti/3.0 (Agricultural Assistant)' } },
+      (res) => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          return reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+        }
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error(`Invalid JSON response: ${e.message}`));
+          }
+        });
+      }
+    ).on('error', reject);
+  });
+}
+
+// In-memory weather cache with 30-minute TTL strictly keyed by location coordinates / district
+const weatherCache = new Map();
+const CACHE_TTL_MS = 30 * 60 * 1000;
 
 const weatherCodeMap = {
   0: { condition: 'Clear Sky', icon: 'sun' },
@@ -27,16 +56,14 @@ const weatherCodeMap = {
 
 function getWeatherDescription(code) {
   return weatherCodeMap[code] || {
-    condition: 'Unknown',
+    condition: 'Partly Cloudy',
     icon: 'cloud'
   };
 }
 
 function formatTime(timeString) {
   if (!timeString) return '--';
-
   const date = new Date(timeString);
-
   return date.toLocaleTimeString('en-IN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -47,36 +74,36 @@ function formatTime(timeString) {
 function getDayName(dateString, index) {
   if (index === 0) return 'Today';
   if (index === 1) return 'Tomorrow';
-
-  return new Date(`${dateString}T12:00:00`).toLocaleDateString(
-    'en-IN',
-    { weekday: 'short' }
-  );
+  return new Date(`${dateString}T12:00:00`).toLocaleDateString('en-IN', { weekday: 'short' });
 }
 
+// Geocode location by district/city name using Open-Meteo Search API
 async function geocodeLocation(state, district) {
-  const searchText = `${district}, ${state}`;
+  const cleanDistrict = (district || '').replace(/\s+(Urban|Rural|District|City)$/i, '').trim();
+  const searchQueries = [
+    cleanDistrict,
+    district,
+    state
+  ].filter(Boolean);
 
-  const url = new URL(GEOCODING_API);
+  for (const query of searchQueries) {
+    try {
+      const url = new URL(GEOCODING_API);
+      url.searchParams.set('name', query);
+      url.searchParams.set('count', '5');
+      url.searchParams.set('language', 'en');
+      url.searchParams.set('countryCode', 'IN');
 
-  url.searchParams.set('name', searchText);
-  url.searchParams.set('count', '5');
-  url.searchParams.set('language', 'en');
-  url.searchParams.set('countryCode', 'IN');
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error('Unable to find the selected location.');
+      const data = await fetchJsonSecure(url.toString());
+      if (data.results && data.results.length > 0) {
+        return data.results[0];
+      }
+    } catch (e) {
+      // Try next query term
+    }
   }
 
-  const data = await response.json();
-
-  if (!data.results || data.results.length === 0) {
-    throw new Error(`Location not found: ${searchText}`);
-  }
-
-  return data.results[0];
+  throw new Error(`Location coordinates not found for ${district}, ${state}`);
 }
 
 async function getWeatherForCoordinates(lat, lng, locationInfo = {}) {
@@ -95,10 +122,8 @@ async function getWeatherForCoordinates(lat, lng, locationInfo = {}) {
   }
 
   const url = new URL(WEATHER_API);
-
   url.searchParams.set('latitude', latitude.toString());
   url.searchParams.set('longitude', longitude.toString());
-
   url.searchParams.set(
     'current',
     [
@@ -114,11 +139,7 @@ async function getWeatherForCoordinates(lat, lng, locationInfo = {}) {
 
   url.searchParams.set(
     'hourly',
-    [
-      'temperature_2m',
-      'precipitation_probability',
-      'weather_code'
-    ].join(',')
+    ['temperature_2m', 'precipitation_probability', 'weather_code'].join(',')
   );
 
   url.searchParams.set(
@@ -136,153 +157,114 @@ async function getWeatherForCoordinates(lat, lng, locationInfo = {}) {
   url.searchParams.set('forecast_days', '7');
   url.searchParams.set('timezone', 'auto');
 
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error('Weather service is currently unavailable.');
-  }
-
-  const data = await response.json();
+  const data = await fetchJsonSecure(url.toString());
 
   if (!data.current || !data.hourly || !data.daily) {
-    throw new Error('Incomplete weather data received.');
+    throw new Error('Incomplete weather data received from Open-Meteo API.');
   }
 
-  const currentWeather = getWeatherDescription(
-    data.current.weather_code
-  );
-
+  const currentWeather = getWeatherDescription(data.current.weather_code);
   const hourlyForecast = [];
-
-  const currentHourIndex = data.hourly.time.findIndex(
-    (time) => time >= data.current.time
-  );
-
+  const currentHourIndex = data.hourly.time.findIndex(time => time >= data.current.time);
   const startIndex = currentHourIndex >= 0 ? currentHourIndex : 0;
 
-  for (
-    let i = startIndex;
-    i < Math.min(startIndex + 6, data.hourly.time.length);
-    i++
-  ) {
-    const hourlyWeather = getWeatherDescription(
-      data.hourly.weather_code[i]
-    );
-
+  for (let i = startIndex; i < Math.min(startIndex + 6, data.hourly.time.length); i++) {
+    const hourlyWeather = getWeatherDescription(data.hourly.weather_code[i]);
     hourlyForecast.push({
       time: formatTime(data.hourly.time[i]),
       temp: Math.round(data.hourly.temperature_2m[i]),
-      rainProb: Math.round(
-        data.hourly.precipitation_probability[i] || 0
-      ),
+      rainProb: Math.round(data.hourly.precipitation_probability[i] || 0),
       icon: hourlyWeather.icon
     });
   }
 
   const weeklyForecast = data.daily.time.map((date, index) => {
-    const dailyWeather = getWeatherDescription(
-      data.daily.weather_code[index]
-    );
-
+    const dailyWeather = getWeatherDescription(data.daily.weather_code[index]);
     return {
       day: getDayName(date, index),
       condition: dailyWeather.condition,
-      tempMax: Math.round(
-        data.daily.temperature_2m_max[index]
-      ),
-      tempMin: Math.round(
-        data.daily.temperature_2m_min[index]
-      ),
-      rainProb: Math.round(
-        data.daily.precipitation_probability_max[index] || 0
-      )
+      tempMax: Math.round(data.daily.temperature_2m_max[index]),
+      tempMin: Math.round(data.daily.temperature_2m_min[index]),
+      rainProb: Math.round(data.daily.precipitation_probability_max[index] || 0)
     };
   });
 
-  const district =
-    locationInfo.district ||
-    locationInfo.name ||
-    'Current Location';
-
-  const state =
-    locationInfo.state ||
-    locationInfo.admin1 ||
-    '';
+  const district = locationInfo.district || locationInfo.name || 'Current Location';
+  const state = locationInfo.state || locationInfo.admin1 || '';
 
   return {
-    location: state
-      ? `${district}, ${state}`
-      : district,
-
+    location: state ? `${district}, ${state}` : district,
     state,
     district,
-
     latitude,
     longitude,
-
-    temperature: Math.round(
-      data.current.temperature_2m
-    ),
-
-    humidity: Math.round(
-      data.current.relative_humidity_2m
-    ),
-
-    rainProbability: Math.round(
-      data.hourly.precipitation_probability[startIndex] || 0
-    ),
-
-    windSpeed: Math.round(
-      data.current.wind_speed_10m
-    ),
-
-    uvIndex: Math.round(
-      data.current.uv_index || 0
-    ),
-
+    temperature: Math.round(data.current.temperature_2m),
+    humidity: Math.round(data.current.relative_humidity_2m),
+    rainProbability: Math.round(data.hourly.precipitation_probability[startIndex] || 0),
+    windSpeed: Math.round(data.current.wind_speed_10m),
+    uvIndex: Math.round(data.current.uv_index || 0),
     condition: currentWeather.condition,
-
     sunrise: formatTime(data.daily.sunrise[0]),
     sunset: formatTime(data.daily.sunset[0]),
-
     farmingAdvice: [
-      'Check the latest rainfall probability before irrigation or spraying.',
-      'Avoid chemical spraying during rain or strong winds.',
-      'Monitor crop leaves for fungal disease when humidity remains high.'
+      'Check local rainfall probability before irrigation or fertilizer application.',
+      'Avoid high-volume chemical spraying during rain or high wind speeds.',
+      'Inspect crop leaves regularly when relative humidity remains high.'
     ],
-
     alerts: [],
-
     hourlyForecast,
     weeklyForecast
   };
 }
 
-async function getWeatherForLocation(
-  state = 'Andhra Pradesh',
-  district = 'Guntur',
-  lat,
-  lng
-) {
-  // GPS has priority over manually selected location.
-  if (
-    Number.isFinite(Number(lat)) &&
-    Number.isFinite(Number(lng))
-  ) {
-    return getWeatherForCoordinates(lat, lng);
-  }
+async function getWeatherForLocation(state = 'Andhra Pradesh', district = 'Guntur', lat, lng) {
+  // Unique location-specific cache key
+  const cacheKey = (lat !== undefined && lng !== undefined && lat !== '' && lng !== '')
+    ? `coord_${Number(lat).toFixed(2)}_${Number(lng).toFixed(2)}`
+    : `loc_${state}_${district}`.toLowerCase().replace(/\s+/g, '_');
 
-  // Otherwise convert selected district/state into coordinates.
-  const location = await geocodeLocation(state, district);
+  const now = Date.now();
+  const cached = weatherCache.get(cacheKey);
 
-  return getWeatherForCoordinates(
-    location.latitude,
-    location.longitude,
-    {
-      district: location.name || district,
-      state: location.admin1 || state
+  // Priority 1: Fetch fresh live weather from Open-Meteo
+  try {
+    let resultData = null;
+
+    if (Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+      resultData = await getWeatherForCoordinates(lat, lng, { district, state });
+    } else {
+      const location = await geocodeLocation(state, district);
+      resultData = await getWeatherForCoordinates(
+        location.latitude,
+        location.longitude,
+        {
+          district: district || location.name,
+          state: state || location.admin1
+        }
+      );
     }
-  );
+
+    if (resultData) {
+      resultData.isCached = false;
+      resultData.lastUpdated = new Date().toISOString();
+      weatherCache.set(cacheKey, { timestamp: now, data: resultData });
+      return resultData;
+    }
+  } catch (err) {
+    console.warn(`[Weather Service Notice]: ${err.message}`);
+
+    // Priority 2: Return valid cached response for the EXACT SAME location
+    if (cached && cached.data) {
+      return {
+        ...cached.data,
+        isCached: true,
+        cacheNotice: `Live weather update unavailable. Showing cached data from ${new Date(cached.timestamp).toLocaleTimeString()}`
+      };
+    }
+
+    // Priority 3: Clear error message when no live or cached data exists (NO FABRICATED SYNTHETIC DATA!)
+    throw new Error(`Live weather data is currently unavailable for ${district}, ${state}. Please check your connection and try again.`);
+  }
 }
 
 module.exports = {

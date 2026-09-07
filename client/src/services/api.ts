@@ -25,9 +25,7 @@ export const userAPI = {
 };
 
 export const aiAPI = {
-  analyzeCrop: (formData: FormData) => API.post('/ai/analyze-crop', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  analyzeCrop: (formData: FormData) => API.post('/ai/analyze-crop', formData),
   analyzeCropBase64: (imageBase64: string, language: string) => API.post('/ai/analyze-crop', { imageBase64, language }),
   chat: (message: string, history: any[], language: string) => API.post('/ai/chat', { message, history, language })
 };
@@ -52,7 +50,7 @@ export const schemeAPI = {
 };
 
 export const shopAPI = {
-  getShops: (state?: string, district?: string, place?: string, category?: string, lat?: number, lng?: number) => API.get('/shops', { params: { state, district, place, category, lat, lng } })
+  getShops: (state?: string, district?: string, place?: string, category?: string, lat?: number, lng?: number, search?: string) => API.get('/shops', { params: { state, district, place, category, lat, lng, search } })
 };
 
 export default API;

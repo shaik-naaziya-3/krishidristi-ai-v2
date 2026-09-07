@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 let isMockMode = false;
+
 const mockStore = {
   users: [],
   scanReports: [],
@@ -9,27 +10,46 @@ const mockStore = {
 };
 
 const connectDB = async () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/krishidrishti';
+  const mongoURI = process.env.MONGODB_URI;
+
+  if (!mongoURI) {
+    console.error('[MongoDB Error]: MONGODB_URI is not configured.');
+    isMockMode = true;
+    return;
+  }
 
   try {
+    console.log('[MongoDB] Connecting to MongoDB Atlas...');
+
     const conn = await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: isProduction ? 10000 : 3000
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      family: 4
     });
+
     console.log(`[MongoDB Connected]: ${conn.connection.host}`);
+    console.log('[MongoDB] Database:', conn.connection.name);
+
     isMockMode = false;
+
   } catch (error) {
-    if (isProduction) {
-      console.error(`[MongoDB Atlas Production Error]: Connection failed (${error.message}).`);
-      isMockMode = false;
-    } else {
-      console.warn(`[MongoDB Warning]: Local MongoDB connection failed (${error.message}). Operating in Graceful Fallback Mode.`);
-      isMockMode = true;
-    }
+    console.error('[MongoDB Atlas Error]:', error.message);
+
+    // Do NOT silently pretend Atlas is connected.
+    isMockMode = true;
+
+    console.warn(
+      '[MongoDB] Atlas connection failed. Application is using temporary fallback storage.'
+    );
   }
 };
 
 const getIsMockMode = () => isMockMode;
+
 const getMockStore = () => mockStore;
 
-module.exports = { connectDB, getIsMockMode, getMockStore };
+module.exports = {
+  connectDB,
+  getIsMockMode,
+  getMockStore
+};
