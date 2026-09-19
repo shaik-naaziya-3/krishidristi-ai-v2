@@ -4,6 +4,43 @@ export interface LocationHierarchy {
   };
 }
 
+export type SupportedLanguage = 'en' | 'te' | 'hi' | 'ta' | 'kn' | 'ml';
+
+export const ANDHRA_PRADESH_DISTRICT_NAMES: Record<string, Record<SupportedLanguage, string>> = {
+  'Alluri Sitharama Raju': { en: 'Alluri Sitharama Raju', te: 'అల్లూరి సీతారామ రాజు', hi: 'अल्लूरी सीताराम राजू', ta: 'அல்லூரி சீதாராம ராஜு', kn: 'ಅಲ್ಲೂರಿ ಸೀತಾರಾಮ ರಾಜು', ml: 'അല്ലൂരി സീതാരാമ രാജു' },
+  Anakapalli: { en: 'Anakapalli', te: 'అనకాపల్లి', hi: 'अनकापल्ली', ta: 'அனகாப்பள்ளி', kn: 'ಅನಕಾಪಲ್ಲಿ', ml: 'അനകാപ്പള്ളി' },
+  Ananthapuramu: { en: 'Ananthapuramu', te: 'అనంతపురము', hi: 'अनंतपुरमु', ta: 'அனந்தபுரம்', kn: 'ಅನಂತಪುರ', ml: 'അനന്തപുറം' },
+  Annamayya: { en: 'Annamayya', te: 'అన్నమయ్య', hi: 'अन्नमय्या', ta: 'அன்னமைய்யா', kn: 'ಅನ್ನಮಯ್ಯ', ml: 'അന്നമയ്യ' },
+  Bapatla: { en: 'Bapatla', te: 'బాపట్ల', hi: 'बापटला', ta: 'பாபட்லா', kn: 'ಬಾಪಟ್ಲ', ml: 'ബാപട്ല' },
+  Chittoor: { en: 'Chittoor', te: 'చిత్తూరు', hi: 'चित्तूर', ta: 'சித்தூர்', kn: 'ಚಿತ್ತೂರು', ml: 'ചിറ്റൂർ' },
+  'Dr. B.R. Ambedkar Konaseema': { en: 'Dr. B.R. Ambedkar Konaseema', te: 'డా. బి.ఆర్. అంబేద్కర్ కోనసీమ', hi: 'डॉ. बी.आर. अंबेडकर कोनसीमा', ta: 'டாக்டர் பி.ஆர். அம்பேத்கர் கோனசீமா', kn: 'ಡಾ. ಬಿ.ಆರ್. ಅಂಬೇಡ್ಕರ್ ಕೋನಸೀಮಾ', ml: 'ഡോ. ബി.ആർ. അംബേദ്കർ കോനസീമ' },
+  'East Godavari': { en: 'East Godavari', te: 'తూర్పు గోదావరి', hi: 'पूर्वी गोदावरी', ta: 'கிழக்கு கோதாவரி', kn: 'ಪೂರ್ವ ಗೋದಾವರಿ', ml: 'കിഴക്കൻ ഗോദാവരി' },
+  Eluru: { en: 'Eluru', te: 'ఏలూరు', hi: 'एलुरु', ta: 'ஏலూరు', kn: 'ಏಲೂರು', ml: 'ഏലూరు' },
+  Guntur: { en: 'Guntur', te: 'గుంటూరు', hi: 'गुंटूर', ta: 'குண்டூர்', kn: 'ಗುಂಟೂರು', ml: 'ഗുണ്ടൂർ' },
+  Kakinada: { en: 'Kakinada', te: 'కాకినాడ', hi: 'काकीनाडा', ta: 'காக்கிநாடா', kn: 'ಕಾಕಿನಾಡ', ml: 'കാകിനാഡ' },
+  Krishna: { en: 'Krishna', te: 'కృష్ణా', hi: 'कृष्णा', ta: 'கிருஷ்ணா', kn: 'ಕೃಷ್ಣಾ', ml: 'കൃഷ്ണ' },
+  Kurnool: { en: 'Kurnool', te: 'కర్నూలు', hi: 'कुरनूल', ta: 'கர்னூல்', kn: 'ಕర్నೂಲ್', ml: 'കർണൂൽ' },
+  Nandyal: { en: 'Nandyal', te: 'నంద్యాల', hi: 'नंद्याल', ta: 'நந்தியால்', kn: 'ನಂದ್ಯಾಲ', ml: 'നന്ദ്യാൽ' },
+  Nellore: { en: 'Nellore', te: 'నెల్లూరు', hi: 'नेल्लोर', ta: 'நெல்லூர்', kn: 'ನೆಲ್ಲೂರು', ml: 'നെല്ലൂർ' },
+  NTR: { en: 'NTR', te: 'ఎన్టీఆర్', hi: 'एनटीआर', ta: 'என்டிஆர்', kn: 'ಎನ್‌ಟಿಆರ್', ml: 'എൻടിആർ' },
+  Palnadu: { en: 'Palnadu', te: 'పల్నాడు', hi: 'पलनाडु', ta: 'பால்நாடு', kn: 'ಪಲ್ನಾಡು', ml: 'പൽനാട്' },
+  'Parvathipuram Manyam': { en: 'Parvathipuram Manyam', te: 'పార్వతీపురం మన్యం', hi: 'पार्वतीपुरम मान्यम', ta: 'பார்வதிபுரம் மான்யம்', kn: 'ಪಾರ್ವತಿಪುರಂ ಮನ್ಯಂ', ml: 'പാർവതിപുരം മന്യം' },
+  Prakasam: { en: 'Prakasam', te: 'ప్రకాశం', hi: 'प्रकाशम', ta: 'பிரகாசம்', kn: 'ಪ್ರಕಾಶಂ', ml: 'പ്രകാശം' },
+  Srikakulam: { en: 'Srikakulam', te: 'శ్రీకాకుళం', hi: 'श्रीकाकुलम', ta: 'ஸ்ரீகாகுளம்', kn: 'ಶ್ರೀಕಾಕುಳಂ', ml: 'ശ്രീകാകുളം' },
+  'Sri Sathya Sai': { en: 'Sri Sathya Sai', te: 'శ్రీ సత్యసాయి', hi: 'श्री सत्य साईं', ta: 'ஸ்ரீ சத்ய சாய்', kn: 'ಶ್ರೀ ಸತ್ಯ ಸಾಯಿ', ml: 'ശ്രീ സത്യ സായി' },
+  Tirupati: { en: 'Tirupati', te: 'తిరుపతి', hi: 'तिरुपति', ta: 'திருப்பதி', kn: 'ತಿರುಪತಿ', ml: 'തിരുപ്പതി' },
+  Visakhapatnam: { en: 'Visakhapatnam', te: 'విశాఖపట్నం', hi: 'विशाखापट्टनम', ta: 'விசாகப்பட்டினம்', kn: 'ವಿಶಾಖಪಟ್ಟಣಂ', ml: 'വിശാഖപട്ടണം' },
+  Vizianagaram: { en: 'Vizianagaram', te: 'విజయనగరం', hi: 'विजयनगरम', ta: 'விஜயநகரம்', kn: 'ವಿಜಯನಗರಂ', ml: 'വിജയനഗരം' },
+  'West Godavari': { en: 'West Godavari', te: 'పశ్చిమ గోదావరి', hi: 'पश्चिमी गोदावरी', ta: 'மேற்கு கோதாவரி', kn: 'ಪಶ್ಚಿಮ ಗೋದಾವರಿ', ml: 'പടിഞ്ഞാറൻ ഗോദാവരി' },
+  'YSR Kadapa': { en: 'YSR Kadapa', te: 'వైఎస్ఆర్ కడప', hi: 'वाईएसआर कडपा', ta: 'ஒய்எஸ்ஆர் கடப்பா', kn: 'ವೈಎಸ್‌ಆರ್ ಕಡಪ', ml: 'വൈഎസ്ആർ കടപ്പ' }
+};
+
+export function getDistrictDisplayName(districtId: string, language: string): string {
+  const aliases: Record<string, string> = { Anantapur: 'Ananthapuramu' };
+  const names = ANDHRA_PRADESH_DISTRICT_NAMES[districtId] || ANDHRA_PRADESH_DISTRICT_NAMES[aliases[districtId]];
+  return names?.[language as SupportedLanguage] || names?.en || districtId;
+}
+
 export const INDIA_LOCATIONS: LocationHierarchy = {
   "Andhra Pradesh": {
     "Guntur": ["Guntur APMC Yard", "Station Road", "RTC Complex", "Bypass Road"],

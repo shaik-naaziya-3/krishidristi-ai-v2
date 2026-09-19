@@ -105,7 +105,12 @@ export const resources = {
         "readAloud": "Read Report Aloud",
         "selectPhotoError": "Please select or capture a leaf photo first.",
         "generateReportError": "Failed to generate crop diagnosis report. Please try again.",
-        "analysisError": "Unable to analyze crop image. Please upload a clear leaf photo."
+        "analysisError": "Unable to analyze crop image. Please upload a clear leaf photo.",
+        "gradcamTitle": "Grad-CAM AI Visual Explainability Heatmap",
+        "gradcamSubtitle": "The side-by-side visualization below highlights the precise leaf regions (Red/Yellow heat zones) that influenced the CNN model's diagnostic prediction.",
+        "environmentalRiskTitle": "Environmental Disease Risk Fusion",
+        "lowConfidenceAlert": "Low Confidence Prediction Warning",
+        "lowConfidenceMsg": "The AI model confidence is under 60%. Please capture a clearer, well-lit leaf image focusing closely on the affected lesion area, or consult an agricultural expert."
       },
       "market": {
         "liveTitle": "Live Market Prices",
@@ -3907,6 +3912,79 @@ export const resources = {
     }
   }
 };
+
+const reportUiTranslations: Record<string, Record<string, string>> = {
+  en: {
+    gradcamTitle: 'Grad-CAM AI Visual Explainability Heatmap',
+    gradcamSubtitle: 'The visualization highlights the leaf regions that influenced the CNN diagnostic prediction.',
+    environmentalRiskTitle: 'Environmental Disease Risk Fusion',
+    lowConfidenceAlert: 'Low Confidence Prediction Warning',
+    lowConfidenceMsg: 'The AI model confidence is under 60%. Please capture a clearer, well-lit leaf image or consult an agricultural expert.',
+    temperature: 'Temperature', humidity: 'Humidity', rainChance: 'Rain Chance', riskDrivers: 'Observed Environmental Risk Drivers', weatherRecommendation: 'Weather Advisory Recommendation'
+  },
+  te: {
+    gradcamTitle: 'గ్రాడ్-క్యామ్ AI దృశ్య వివరణ హీట్‌మ్యాప్', gradcamSubtitle: 'CNN నిర్ధారణను ప్రభావితం చేసిన ఆకు భాగాలను ఈ చిత్రం చూపిస్తుంది.', environmentalRiskTitle: 'పర్యావరణ వ్యాధి ప్రమాద విశ్లేషణ', lowConfidenceAlert: 'తక్కువ నమ్మకపు అంచనా హెచ్చరిక', lowConfidenceMsg: 'AI మోడల్ నమ్మకం 60% కంటే తక్కువగా ఉంది. స్పష్టమైన, మంచి వెలుతురు ఉన్న ఆకు చిత్రాన్ని తీసుకోండి లేదా వ్యవసాయ నిపుణుడిని సంప్రదించండి.', temperature: 'ఉష్ణోగ్రత', humidity: 'తేమ', rainChance: 'వర్షం అవకాశం', riskDrivers: 'పర్యావరణ ప్రమాద కారణాలు', weatherRecommendation: 'వాతావరణ సలహా'
+  },
+  hi: {
+    gradcamTitle: 'Grad-CAM AI दृश्य व्याख्या हीटमैप', gradcamSubtitle: 'यह चित्र उन पत्ती क्षेत्रों को दिखाता है जिन्होंने CNN निदान को प्रभावित किया।', environmentalRiskTitle: 'पर्यावरणीय रोग जोखिम विश्लेषण', lowConfidenceAlert: 'कम भरोसे वाली भविष्यवाणी चेतावनी', lowConfidenceMsg: 'AI मॉडल का भरोसा 60% से कम है। अधिक स्पष्ट और अच्छी रोशनी वाली पत्ती की तस्वीर लें या कृषि विशेषज्ञ से सलाह लें।', temperature: 'तापमान', humidity: 'नमी', rainChance: 'बारिश की संभावना', riskDrivers: 'पर्यावरणीय जोखिम के कारण', weatherRecommendation: 'मौसम सलाह'
+  },
+  ta: {
+    gradcamTitle: 'Grad-CAM AI காட்சி விளக்க ஹீட்மேப்', gradcamSubtitle: 'CNN நோயறிதலை பாதித்த இலை பகுதிகளை இந்த படம் காட்டுகிறது.', environmentalRiskTitle: 'சுற்றுச்சூழல் நோய் அபாய பகுப்பாய்வு', lowConfidenceAlert: 'குறைந்த நம்பிக்கை கணிப்பு எச்சரிக்கை', lowConfidenceMsg: 'AI மாதிரியின் நம்பிக்கை 60% க்கும் குறைவாக உள்ளது. தெளிவான, நல்ல வெளிச்சம் உள்ள இலைப் படத்தை எடுக்கவும் அல்லது வேளாண் நிபுணரை அணுகவும்.', temperature: 'வெப்பநிலை', humidity: 'ஈரப்பதம்', rainChance: 'மழை வாய்ப்பு', riskDrivers: 'சுற்றுச்சூழல் அபாய காரணிகள்', weatherRecommendation: 'வானிலை ஆலோசனை'
+  },
+  kn: {
+    gradcamTitle: 'Grad-CAM AI ದೃಶ್ಯ ವಿವರಣೆ ಹೀಟ್‌ಮ್ಯಾಪ್', gradcamSubtitle: 'CNN ರೋಗನಿರ್ಣಯಕ್ಕೆ ಕಾರಣವಾದ ಎಲೆಯ ಭಾಗಗಳನ್ನು ಈ ಚಿತ್ರ ತೋರಿಸುತ್ತದೆ.', environmentalRiskTitle: 'ಪರಿಸರ ರೋಗ ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ', lowConfidenceAlert: 'ಕಡಿಮೆ ವಿಶ್ವಾಸದ ಮುನ್ಸೂಚನೆ ಎಚ್ಚರಿಕೆ', lowConfidenceMsg: 'AI ಮಾದರಿಯ ವಿಶ್ವಾಸವು 60% ಕ್ಕಿಂತ ಕಡಿಮೆಯಿದೆ. ಸ್ಪಷ್ಟವಾದ, ಉತ್ತಮ ಬೆಳಕಿನ ಎಲೆ ಚಿತ್ರ ತೆಗೆದು ಕೃಷಿ ತಜ್ಞರನ್ನು ಸಂಪರ್ಕಿಸಿ.', temperature: 'ತಾಪಮಾನ', humidity: 'ತೇವಾಂಶ', rainChance: 'ಮಳೆಯ ಸಾಧ್ಯತೆ', riskDrivers: 'ಪರಿಸರ ಅಪಾಯದ ಕಾರಣಗಳು', weatherRecommendation: 'ಹವಾಮಾನ ಸಲಹೆ'
+  },
+  ml: {
+    gradcamTitle: 'Grad-CAM AI ദൃശ്യ വിശദീകരണ ഹീറ്റ്മാപ്പ്', gradcamSubtitle: 'CNN രോഗനിർണയത്തെ സ്വാധീനിച്ച ഇല ഭാഗങ്ങൾ ഈ ചിത്രം കാണിക്കുന്നു.', environmentalRiskTitle: 'പരിസ്ഥിതി രോഗസാധ്യത വിശകലനം', lowConfidenceAlert: 'കുറഞ്ഞ ആത്മവിശ്വാസ പ്രവചന മുന്നറിയിപ്പ്', lowConfidenceMsg: 'AI മാതൃകയുടെ ആത്മവിശ്വാസം 60%-ൽ താഴെയാണ്. വ്യക്തവും നല്ല വെളിച്ചമുള്ളതുമായ ഇലചിത്രം എടുക്കുക അല്ലെങ്കിൽ കാർഷിക വിദഗ്ധനെ സമീപിക്കുക.', temperature: 'താപനില', humidity: 'ഈർപ്പം', rainChance: 'മഴസാധ്യത', riskDrivers: 'പരിസ്ഥിതി അപകട കാരണങ്ങൾ', weatherRecommendation: 'കാലാവസ്ഥാ ഉപദേശം'
+  }
+};
+
+Object.entries(reportUiTranslations).forEach(([language, translations]) => {
+  const translation = (resources as any)[language]?.translation;
+  if (translation) Object.assign(translation.scanner, translations);
+});
+
+const marketUiTranslations: Record<string, string> = {
+  en: 'Prices shown come from the configured market dataset and are not live quotes.',
+  te: 'చూపిన ధరలు కాన్ఫిగర్ చేసిన మార్కెట్ డేటాసెట్ నుంచి తీసుకున్నవి; ఇవి ప్రత్యక్ష ధరలు కావు.',
+  hi: 'दिखाई गई कीमतें कॉन्फ़िगर किए गए बाजार डेटा से हैं और लाइव भाव नहीं हैं।',
+  ta: 'காட்டப்படும் விலைகள் கட்டமைக்கப்பட்ட சந்தை தரவிலிருந்து பெறப்பட்டவை; இவை நேரடி விலைகள் அல்ல.',
+  kn: 'ತೋರಿಸಲಾದ ಬೆಲೆಗಳು ಕಾನ್ಫಿಗರ್ ಮಾಡಿದ ಮಾರುಕಟ್ಟೆ ಡೇಟಾದಿಂದ ಬಂದವು; ಇವು ನೇರ ಬೆಲೆಗಳಲ್ಲ.',
+  ml: 'കാണിക്കുന്ന വിലകൾ ക്രമീകരിച്ച മാർക്കറ്റ് ഡാറ്റാസെറ്റിൽ നിന്നുള്ളതാണ്; ഇവ തത്സമയ വിലകളല്ല.'
+};
+
+Object.entries(marketUiTranslations).forEach(([language, referenceNote]) => {
+  const translation = (resources as any)[language]?.translation;
+  if (translation) translation.market.referenceNote = referenceNote;
+});
+
+const shopsExtraTranslations: Record<string, Record<string, string>> = {
+  en: { records: 'records', record: 'record', noRecordsTitle: 'No shop records currently available for this location.', noRecordsDescription: 'There are no verified or sample shop entries listed for this location under the selected filters.', resetFilters: 'Reset Filters', useGpsNearby: 'Use GPS to search nearby', verifiedStore: 'Verified Store', liveLocation: 'Live Location', sampleData: 'Sample Data', ratingUnavailable: 'Rating unavailable', timingsUnavailable: 'Timings unavailable', distanceUnavailable: 'Distance unavailable', phoneUnavailable: 'Phone unavailable' },
+  te: { records: 'రికార్డులు', record: 'రికార్డు', noRecordsTitle: 'ఈ ప్రాంతానికి ప్రస్తుతం దుకాణాల రికార్డులు అందుబాటులో లేవు.', noRecordsDescription: 'ఎంచుకున్న ఫిల్టర్‌లకు ఈ ప్రాంతంలో ధృవీకరించిన లేదా నమూనా దుకాణాలు లేవు.', resetFilters: 'ఫిల్టర్‌లను రీసెట్ చేయండి', useGpsNearby: 'సమీపంలోని దుకాణాల కోసం GPS వాడండి', verifiedStore: 'ధృవీకరించిన దుకాణం', liveLocation: 'లైవ్ లొకేషన్', sampleData: 'నమూనా డేటా', ratingUnavailable: 'రేటింగ్ అందుబాటులో లేదు', timingsUnavailable: 'సమయాలు అందుబాటులో లేవు', distanceUnavailable: 'దూరం అందుబాటులో లేదు', phoneUnavailable: 'ఫోన్ అందుబాటులో లేదు' },
+  hi: { records: 'रिकॉर्ड', record: 'रिकॉर्ड', noRecordsTitle: 'इस स्थान के लिए दुकान के रिकॉर्ड उपलब्ध नहीं हैं।', noRecordsDescription: 'चयनित फ़िल्टर के अनुसार इस स्थान पर कोई सत्यापित या नमूना दुकान नहीं है।', resetFilters: 'फ़िल्टर रीसेट करें', useGpsNearby: 'पास की दुकानों के लिए GPS उपयोग करें', verifiedStore: 'सत्यापित दुकान', liveLocation: 'लाइव स्थान', sampleData: 'नमूना डेटा', ratingUnavailable: 'रेटिंग उपलब्ध नहीं', timingsUnavailable: 'समय उपलब्ध नहीं', distanceUnavailable: 'दूरी उपलब्ध नहीं', phoneUnavailable: 'फोन उपलब्ध नहीं' },
+  ta: { records: 'பதிவுகள்', record: 'பதிவு', noRecordsTitle: 'இந்த இடத்திற்கு கடை பதிவுகள் தற்போது இல்லை.', noRecordsDescription: 'தேர்ந்தெடுத்த வடிகட்டிகளுக்கு இந்த இடத்தில் சரிபார்க்கப்பட்ட அல்லது மாதிரி கடைகள் இல்லை.', resetFilters: 'வடிகட்டிகளை மீட்டமை', useGpsNearby: 'அருகிலுள்ள கடைகளுக்கு GPS பயன்படுத்தவும்', verifiedStore: 'சரிபார்க்கப்பட்ட கடை', liveLocation: 'நேரடி இருப்பிடம்', sampleData: 'மாதிரி தரவு', ratingUnavailable: 'மதிப்பீடு இல்லை', timingsUnavailable: 'நேரம் இல்லை', distanceUnavailable: 'தூரம் இல்லை', phoneUnavailable: 'தொலைபேசி இல்லை' },
+  kn: { records: 'ದಾಖಲೆಗಳು', record: 'ದಾಖಲೆ', noRecordsTitle: 'ಈ ಸ್ಥಳಕ್ಕೆ ಅಂಗಡಿ ದಾಖಲೆಗಳು ಲಭ್ಯವಿಲ್ಲ.', noRecordsDescription: 'ಆಯ್ಕೆ ಮಾಡಿದ ಫಿಲ್ಟರ್‌ಗಳಿಗೆ ಈ ಸ್ಥಳದಲ್ಲಿ ಪರಿಶೀಲಿತ ಅಥವಾ ಮಾದರಿ ಅಂಗಡಿಗಳಿಲ್ಲ.', resetFilters: 'ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಮರುಹೊಂದಿಸಿ', useGpsNearby: 'ಹತ್ತಿರದ ಅಂಗಡಿಗಳಿಗಾಗಿ GPS ಬಳಸಿ', verifiedStore: 'ಪರಿಶೀಲಿತ ಅಂಗಡಿ', liveLocation: 'ಲೈವ್ ಸ್ಥಳ', sampleData: 'ಮಾದರಿ ಡೇಟಾ', ratingUnavailable: 'ರೇಟಿಂಗ್ ಲಭ್ಯವಿಲ್ಲ', timingsUnavailable: 'ಸಮಯ ಲಭ್ಯವಿಲ್ಲ', distanceUnavailable: 'ದೂರ ಲಭ್ಯವಿಲ್ಲ', phoneUnavailable: 'ಫೋನ್ ಲಭ್ಯವಿಲ್ಲ' },
+  ml: { records: 'റെക്കോർഡുകൾ', record: 'റെക്കോർഡ്', noRecordsTitle: 'ഈ സ്ഥലത്തിന് കട റെക്കോർഡുകൾ നിലവിൽ ലഭ്യമല്ല.', noRecordsDescription: 'തിരഞ്ഞെടുത്ത ഫിൽട്ടറുകൾക്ക് ഈ സ്ഥലത്ത് പരിശോധിച്ച അല്ലെങ്കിൽ മാതൃകാ കടകൾ ഇല്ല.', resetFilters: 'ഫിൽട്ടറുകൾ പുനഃസജ്ജമാക്കുക', useGpsNearby: 'സമീപത്തെ കടകൾക്കായി GPS ഉപയോഗിക്കുക', verifiedStore: 'പരിശോധിച്ച കട', liveLocation: 'തത്സമയ സ്ഥലം', sampleData: 'മാതൃകാ ഡാറ്റ', ratingUnavailable: 'റേറ്റിംഗ് ലഭ്യമല്ല', timingsUnavailable: 'സമയങ്ങൾ ലഭ്യമല്ല', distanceUnavailable: 'ദൂരം ലഭ്യമല്ല', phoneUnavailable: 'ഫോൺ ലഭ്യമല്ല' }
+};
+
+Object.entries(shopsExtraTranslations).forEach(([language, translations]) => {
+  const translation = (resources as any)[language]?.translation;
+  if (translation) Object.assign(translation.shops, translations);
+});
+
+const shopsCompleteTranslations: Record<string, Record<string, string>> = {
+  en: { searchPlaceholder: 'Search shop name, market yard, or address...', allPlaces: 'All Towns & APMCs', useGps: 'Search Nearby via GPS', locating: 'Locating via GPS...', directions: 'Get Directions' },
+  te: { searchPlaceholder: 'దుకాణం పేరు, మార్కెట్ యార్డ్ లేదా చిరునామా వెతకండి...', allPlaces: 'అన్ని పట్టణాలు & APMCలు', useGps: 'GPS ద్వారా సమీప దుకాణాలను వెతకండి', locating: 'GPS ద్వారా ప్రాంతాన్ని గుర్తిస్తోంది...', directions: 'దారి చూపించు' },
+  hi: { searchPlaceholder: 'दुकान का नाम, मंडी या पता खोजें...', allPlaces: 'सभी शहर और APMC', useGps: 'GPS से पास की दुकानें खोजें', locating: 'GPS से स्थान खोजा जा रहा है...', directions: 'दिशा-निर्देश प्राप्त करें' },
+  ta: { searchPlaceholder: 'கடை பெயர், சந்தை அல்லது முகவரியைத் தேடுங்கள்...', allPlaces: 'அனைத்து நகரங்கள் & APMCகள்', useGps: 'GPS மூலம் அருகிலுள்ள கடைகளைத் தேடுங்கள்', locating: 'GPS மூலம் இடம் கண்டறியப்படுகிறது...', directions: 'வழியைப் பெறுக' },
+  kn: { searchPlaceholder: 'ಅಂಗಡಿ ಹೆಸರು, ಮಾರುಕಟ್ಟೆ ಅಥವಾ ವಿಳಾಸ ಹುಡುಕಿ...', allPlaces: 'ಎಲ್ಲಾ ಪಟ್ಟಣಗಳು ಮತ್ತು APMCಗಳು', useGps: 'GPS ಮೂಲಕ ಹತ್ತಿರದ ಅಂಗಡಿಗಳನ್ನು ಹುಡುಕಿ', locating: 'GPS ಮೂಲಕ ಸ್ಥಳ ಹುಡುಕಲಾಗುತ್ತಿದೆ...', directions: 'ದಾರಿ ಪಡೆಯಿರಿ' },
+  ml: { searchPlaceholder: 'കടയുടെ പേര്, മാർക്കറ്റ് അല്ലെങ്കിൽ വിലാസം തിരയുക...', allPlaces: 'എല്ലാ പട്ടണങ്ങളും APMCകളും', useGps: 'GPS ഉപയോഗിച്ച് സമീപത്തെ കടകൾ തിരയുക', locating: 'GPS വഴി സ്ഥലം കണ്ടെത്തുന്നു...', directions: 'വഴി കണ്ടെത്തുക' }
+};
+
+Object.entries(shopsCompleteTranslations).forEach(([language, translations]) => {
+  const translation = (resources as any)[language]?.translation;
+  if (translation) Object.assign(translation.shops, translations);
+});
 
 i18n
   .use(LanguageDetector)

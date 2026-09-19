@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shopAPI } from '../services/api';
 import { AgriShop } from '../types';
-import { INDIA_LOCATIONS } from '../data/indiaLocations';
+import { getDistrictDisplayName, INDIA_LOCATIONS } from '../data/indiaLocations';
 import { 
   ShoppingBag, MapPin, Phone, Clock, Star, ExternalLink, 
   Navigation, RefreshCw, Filter, Sprout, ShieldAlert, Wrench, Search,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export const NearbyShopsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [selectedState, setSelectedState] = useState<string>('Andhra Pradesh');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('Guntur');
@@ -65,7 +65,7 @@ export const NearbyShopsPage: React.FC = () => {
 
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
-      alert(t('weather.geoNotSupported', { defaultValue: 'Geolocation is not supported by your browser.' }));
+      alert(t('weather.geoNotSupported'));
       return;
     }
 
@@ -79,7 +79,7 @@ export const NearbyShopsPage: React.FC = () => {
       (error) => {
         setLocating(false);
         console.warn('GPS error:', error.message);
-        alert(t('shops.geoError', { defaultValue: 'Could not detect GPS location. Showing shops for selected area.' }));
+        alert(t('shops.geoError'));
       },
       { timeout: 10000 }
     );
@@ -90,11 +90,25 @@ export const NearbyShopsPage: React.FC = () => {
   const availablePlaces = INDIA_LOCATIONS[selectedState]?.[selectedDistrict] || [];
 
   const categories = [
-    { key: 'all', label: t('shops.categories.all', { defaultValue: 'All Shops' }), icon: ShoppingBag },
-    { key: 'fertilizer_seed', label: t('shops.categories.fertilizer_seed', { defaultValue: 'Seeds & Fertilizers' }), icon: Sprout },
-    { key: 'pesticides', label: t('shops.categories.pesticides', { defaultValue: 'Pesticides & Bio' }), icon: ShieldAlert },
-    { key: 'equipment', label: t('shops.categories.equipment', { defaultValue: 'Equipment & Machinery' }), icon: Wrench }
+    { key: 'all', label: t('shops.categories.all'), icon: ShoppingBag },
+    { key: 'fertilizer_seed', label: t('shops.categories.fertilizer_seed'), icon: Sprout },
+    { key: 'pesticides', label: t('shops.categories.pesticides'), icon: ShieldAlert },
+    { key: 'equipment', label: t('shops.categories.equipment'), icon: Wrench }
   ];
+
+  const getCategoryLabel = (category?: string, type?: string) => {
+    const source = `${category || ''} ${type || ''}`.toLowerCase();
+    if (source.includes('fertilizer') || source.includes('seed')) return t('shops.categories.fertilizer_seed');
+    if (source.includes('pesticide') || source.includes('chemical') || source.includes('bio')) return t('shops.categories.pesticides');
+    if (source.includes('equipment') || source.includes('machinery') || source.includes('tool')) return t('shops.categories.equipment');
+    return category || type || '';
+  };
+
+  const getLocalizedShopName = (shop: AgriShop) => {
+    return shop.nameTranslations?.[i18n.language as keyof typeof shop.nameTranslations]
+      || shop.nameTranslations?.en
+      || shop.name;
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 py-4 px-2 sm:px-4">
@@ -103,13 +117,13 @@ export const NearbyShopsPage: React.FC = () => {
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-bold uppercase tracking-wider">
           <ShoppingBag className="w-4 h-4" />
-          <span>{t('shops.badge', { defaultValue: 'Agricultural Shops Directory' })}</span>
+          <span>{t('shops.badge')}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
-          {t('shops.title', { defaultValue: 'Nearby Agricultural Shops' })}
+          {t('shops.title')}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          {t('shops.subtitle', { defaultValue: 'Find fertilizer, seed & pesticide stores across Indian States & UTs' })}
+          {t('shops.subtitle')}
         </p>
       </div>
 
@@ -123,7 +137,7 @@ export const NearbyShopsPage: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('shops.searchPlaceholder', { defaultValue: 'Search shop name, market yard, or address...' })}
+            placeholder={t('shops.searchPlaceholder')}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder:text-slate-400"
           />
         </div>
@@ -133,7 +147,7 @@ export const NearbyShopsPage: React.FC = () => {
           {/* Select State */}
           <div className="space-y-1">
             <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
-              {t('shops.selectState', { defaultValue: 'Select State / UT' })}
+              {t('shops.selectState')}
             </label>
             <select
               value={selectedState}
@@ -142,7 +156,7 @@ export const NearbyShopsPage: React.FC = () => {
             >
               {availableStates.map((st) => (
                 <option key={st} value={st}>
-                  {st}
+                  {t(`data.states.${st}`, { defaultValue: st })}
                 </option>
               ))}
             </select>
@@ -151,7 +165,7 @@ export const NearbyShopsPage: React.FC = () => {
           {/* Select District */}
           <div className="space-y-1">
             <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
-              {t('shops.selectDistrict', { defaultValue: 'Select District' })}
+              {t('shops.selectDistrict')}
             </label>
             <select
               value={selectedDistrict}
@@ -160,7 +174,7 @@ export const NearbyShopsPage: React.FC = () => {
             >
               {availableDistricts.map((dist) => (
                 <option key={dist} value={dist}>
-                  {dist}
+                  {getDistrictDisplayName(dist, i18n.language)}
                 </option>
               ))}
             </select>
@@ -169,14 +183,14 @@ export const NearbyShopsPage: React.FC = () => {
           {/* Select Place / Town */}
           <div className="space-y-1">
             <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
-              {t('shops.selectPlace', { defaultValue: 'Town / Market Yard' })}
+              {t('shops.selectPlace')}
             </label>
             <select
               value={selectedPlace}
               onChange={(e) => setSelectedPlace(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
             >
-              <option value="">{t('shops.allPlaces', { defaultValue: 'All Towns & APMCs' })}</option>
+              <option value="">{t('shops.allPlaces')}</option>
               {availablePlaces.map((plc) => (
                 <option key={plc} value={plc}>
                   {plc}
@@ -195,11 +209,11 @@ export const NearbyShopsPage: React.FC = () => {
             className="px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs transition-all flex items-center gap-2 shadow-md shadow-rose-500/20 disabled:opacity-50"
           >
             {locating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-            <span>{locating ? t('shops.locating', { defaultValue: 'Locating via GPS...' }) : t('shops.useGps', { defaultValue: 'Search Nearby via GPS' })}</span>
+            <span>{locating ? t('shops.locating') : t('shops.useGps')}</span>
           </button>
 
           <span className="text-xs font-bold text-slate-500">
-            {shops.length} {shops.length === 1 ? 'record' : 'records'} found
+            {shops.length} {shops.length === 1 ? t('shops.record') : t('shops.records')}
           </span>
         </div>
 
@@ -230,7 +244,7 @@ export const NearbyShopsPage: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <RefreshCw className="w-8 h-8 text-rose-500 animate-spin" />
           <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-            {t('shops.loading', { defaultValue: 'Searching shop directory...' })}
+            {t('shops.loading')}
           </p>
         </div>
       )}
@@ -243,10 +257,10 @@ export const NearbyShopsPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              No shop records currently available for this location.
+              {t('shops.noRecordsTitle')}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              There are no verified or sample shop entries listed for {selectedDistrict}, {selectedState} under the selected filters.
+              {t('shops.noRecordsDescription')} {selectedDistrict}, {selectedState}.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full justify-center">
@@ -256,18 +270,18 @@ export const NearbyShopsPage: React.FC = () => {
                 setSelectedCategory('all');
                 setSearchQuery('');
               }}
-              aria-label="Try another nearby district"
+              aria-label={t('shops.resetFilters')}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all"
             >
-              Reset Filters
+              {t('shops.resetFilters')}
             </button>
             <button
               onClick={handleDetectGPS}
-              aria-label="Use GPS to search nearby locations"
+              aria-label={t('shops.useGpsNearby')}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
             >
               <Navigation className="w-3.5 h-3.5" />
-              <span>Use GPS to search nearby</span>
+              <span>{t('shops.useGpsNearby')}</span>
             </button>
           </div>
         </div>
@@ -292,24 +306,24 @@ export const NearbyShopsPage: React.FC = () => {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="px-2.5 py-1 rounded-md bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-[11px] font-bold text-rose-700 dark:text-rose-300">
-                        {shop.category || shop.type}
+                        {getCategoryLabel(shop.category, shop.type)}
                       </span>
 
                       {/* Explicit Honest Data Source Tag */}
                       {shop.dataSource === 'verified' ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Verified Store</span>
+                          <span>{t('shops.verifiedStore')}</span>
                         </span>
                       ) : shop.dataSource === 'live' ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-[10px] font-bold text-sky-700 dark:text-sky-300">
                           <Navigation className="w-3 h-3 text-sky-600" />
-                          <span>Live Location</span>
+                          <span>{t('shops.liveLocation')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[10px] font-bold text-amber-700 dark:text-amber-300">
                           <Info className="w-3 h-3 text-amber-600" />
-                          <span>Sample Data</span>
+                          <span>{t('shops.sampleData')}</span>
                         </span>
                       )}
                     </div>
@@ -326,13 +340,13 @@ export const NearbyShopsPage: React.FC = () => {
                         ) : null}
                       </div>
                     ) : (
-                      <span className="text-[11px] text-slate-400 italic">Rating unavailable</span>
+                      <span className="text-[11px] text-slate-400 italic">{t('shops.ratingUnavailable')}</span>
                     )}
                   </div>
 
                   {/* Shop Name */}
                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
-                    {shop.name}
+                    {getLocalizedShopName(shop)}
                   </h3>
 
                   {/* Address */}
@@ -347,7 +361,7 @@ export const NearbyShopsPage: React.FC = () => {
                   <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{shopTiming || 'Timings unavailable'}</span>
+                      <span>{shopTiming || t('shops.timingsUnavailable')}</span>
                     </div>
 
                     {shop.distance ? (
@@ -356,7 +370,7 @@ export const NearbyShopsPage: React.FC = () => {
                         <span>{shop.distance}</span>
                       </div>
                     ) : (
-                      <span className="text-[11px] text-slate-400 italic">Distance unavailable</span>
+                      <span className="text-[11px] text-slate-400 italic">{t('shops.distanceUnavailable')}</span>
                     )}
                   </div>
 
@@ -374,7 +388,7 @@ export const NearbyShopsPage: React.FC = () => {
                     </a>
                   ) : (
                     <div className="flex-1 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-400 text-xs font-semibold text-center italic">
-                      Phone unavailable
+                      {t('shops.phoneUnavailable')}
                     </div>
                   )}
 
@@ -386,7 +400,7 @@ export const NearbyShopsPage: React.FC = () => {
                       className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-rose-600/20"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      <span>{t('shops.directions', { defaultValue: 'Get Directions' })}</span>
+                      <span>{t('shops.directions')}</span>
                     </a>
                   ) : null}
                 </div>

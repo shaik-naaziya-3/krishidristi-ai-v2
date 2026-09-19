@@ -9,12 +9,20 @@ const mockStore = {
   schemes: []
 };
 
+function sanitizeMongoError(error) {
+  const message = error?.message || String(error);
+  return message
+    .replace(/mongodb(?:\+srv)?:\/\/[^\s]+/gi, 'mongodb://[redacted]')
+    .split('\n')[0];
+}
+
 const connectDB = async () => {
   const mongoURI = process.env.MONGODB_URI;
 
   if (!mongoURI) {
     console.error('[MongoDB Error]: MONGODB_URI is not configured.');
     isMockMode = true;
+    console.warn('[MongoDB] Fallback storage activated because Atlas configuration is missing.');
     return;
   }
 
@@ -33,14 +41,12 @@ const connectDB = async () => {
     isMockMode = false;
 
   } catch (error) {
-    console.error('[MongoDB Atlas Error]:', error.message);
+    console.error('[MongoDB Atlas Error]:', sanitizeMongoError(error));
 
     // Do NOT silently pretend Atlas is connected.
     isMockMode = true;
 
-    console.warn(
-      '[MongoDB] Atlas connection failed. Application is using temporary fallback storage.'
-    );
+    console.warn('[MongoDB] Fallback storage activated because Atlas connection failed.');
   }
 };
 

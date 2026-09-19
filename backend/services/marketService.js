@@ -29,10 +29,29 @@ const sampleMarketData = [
   { id: 'm17', crop: 'Soyabean (Yellow)', cropKey: 'soyabean', state: 'Maharashtra', stateKey: 'maharashtra', district: 'Latur', districtKey: 'latur', market: 'Latur APMC Mandi', marketKey: 'latur_apmc', modalPrice: 4650, minPrice: 4400, maxPrice: 4850, arrivalQuantity: '1850 Quintals', unit: 'Quintal', trend: 'up', change: '+75', updated: 'Today' }
 ];
 
+const ANDHRA_PRADESH_DISTRICTS = [
+  'Alluri Sitharama Raju', 'Anakapalli', 'Ananthapuramu', 'Annamayya',
+  'Bapatla', 'Chittoor', 'Dr. B.R. Ambedkar Konaseema', 'East Godavari',
+  'Eluru', 'Guntur', 'Kakinada', 'Krishna', 'Kurnool', 'Nandyal', 'Nellore',
+  'NTR', 'Palnadu', 'Parvathipuram Manyam', 'Prakasam', 'Srikakulam',
+  'Sri Sathya Sai', 'Tirupati', 'Visakhapatnam', 'Vizianagaram', 'West Godavari',
+  'YSR Kadapa'
+];
+
+const districtAliases = {
+  Anantapur: 'Ananthapuramu'
+};
+
+function normalizeDistrictName(district) {
+  return districtAliases[district] || district;
+}
+
 function getMarketPrices(stateFilter, districtFilter, marketFilter, cropFilter) {
+  const normalizedDistrictFilter = normalizeDistrictName(districtFilter);
   return sampleMarketData.filter(item => {
     const matchState = !stateFilter || item.state.toLowerCase() === stateFilter.toLowerCase() || item.stateKey === stateFilter.toLowerCase();
-    const matchDistrict = !districtFilter || item.district.toLowerCase() === districtFilter.toLowerCase() || item.districtKey === districtFilter.toLowerCase();
+    const normalizedDistrict = normalizeDistrictName(item.district);
+    const matchDistrict = !normalizedDistrictFilter || normalizedDistrict.toLowerCase() === normalizedDistrictFilter.toLowerCase() || item.districtKey === String(districtFilter).toLowerCase();
     const matchMarket = !marketFilter || item.market.toLowerCase() === marketFilter.toLowerCase() || item.marketKey === marketFilter.toLowerCase();
     const matchCrop = !cropFilter || item.crop.toLowerCase().includes(cropFilter.toLowerCase());
     return matchState && matchDistrict && matchMarket && matchCrop;
@@ -41,6 +60,20 @@ function getMarketPrices(stateFilter, districtFilter, marketFilter, cropFilter) 
 
 function getMarketLocations() {
   const stateMap = {};
+
+  stateMap['Andhra Pradesh'] = {
+    stateName: 'Andhra Pradesh',
+    stateKey: 'andhra_pradesh',
+    districts: {}
+  };
+  ANDHRA_PRADESH_DISTRICTS.forEach(district => {
+    stateMap['Andhra Pradesh'].districts[district] = {
+      districtName: district,
+      districtKey: district.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+      markets: []
+    };
+  });
+
   sampleMarketData.forEach(item => {
     if (!stateMap[item.state]) {
       stateMap[item.state] = {
@@ -49,15 +82,18 @@ function getMarketLocations() {
         districts: {}
       };
     }
-    if (!stateMap[item.state].districts[item.district]) {
-      stateMap[item.state].districts[item.district] = {
-        districtName: item.district,
+    const districtName = item.state === 'Andhra Pradesh'
+      ? normalizeDistrictName(item.district)
+      : item.district;
+    if (!stateMap[item.state].districts[districtName]) {
+      stateMap[item.state].districts[districtName] = {
+        districtName,
         districtKey: item.districtKey,
         markets: []
       };
     }
-    if (!stateMap[item.state].districts[item.district].markets.some(m => m.marketName === item.market)) {
-      stateMap[item.state].districts[item.district].markets.push({
+    if (!stateMap[item.state].districts[districtName].markets.some(m => m.marketName === item.market)) {
+      stateMap[item.state].districts[districtName].markets.push({
         marketName: item.market,
         marketKey: item.marketKey
       });
@@ -66,4 +102,4 @@ function getMarketLocations() {
   return stateMap;
 }
 
-module.exports = { getMarketPrices, getMarketLocations, sampleMarketData };
+module.exports = { getMarketPrices, getMarketLocations, sampleMarketData, ANDHRA_PRADESH_DISTRICTS };

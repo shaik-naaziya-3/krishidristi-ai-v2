@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const agriShopSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
+  nameTranslations: { type: Map, of: String, default: undefined },
   type: { type: String, required: true },
   category: { type: String, required: true },
   state: { type: String, required: true, index: true },

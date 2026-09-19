@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import i18n from '../i18n/i18n';
+import { SpeechService } from '../services/speech';
 
 export interface Language {
   code: string;
@@ -36,6 +37,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const handleLanguageChange = (lng: string) => {
       setCurrentLang(lng);
+      SpeechService.setLanguage(lng);
     };
 
     i18n.on('languageChanged', handleLanguageChange);

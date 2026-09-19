@@ -20,6 +20,7 @@ export interface UserProfile {
 export interface ScanReport {
   _id?: string;
   userId?: string;
+  diseaseKey?: string;
   uploadedImage: string;
   heatmapUrl?: string;
   cropName?: string;
@@ -128,6 +129,7 @@ export interface GovernmentScheme {
 export interface AgriShop {
   id: string;
   name: string;
+  nameTranslations?: Partial<Record<LanguageCode, string>>;
   type: 'fertilizer_seed' | 'pesticides' | 'equipment' | 'general' | string;
   category?: string;
   state?: string;

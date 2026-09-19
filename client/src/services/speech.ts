@@ -1,7 +1,7 @@
 // Speech Recognition & Speech Synthesis Utility
 
 const langToBCP47: Record<string, string> = {
-  en: 'en-IN',
+  en: 'en-US',
   te: 'te-IN',
   hi: 'hi-IN',
   ta: 'ta-IN',
@@ -12,6 +12,14 @@ const langToBCP47: Record<string, string> = {
 export class SpeechService {
   private static recognition: any = null;
   private static isListening: boolean = false;
+  private static activeLanguage = 'en';
+  private static activeOnResult: ((transcript: string, isFinal: boolean) => void) | null = null;
+  private static activeOnError: ((err: any) => void) | undefined;
+  private static restartAfterLanguageChange = false;
+
+  public static getLocale(lang: string = 'en') {
+    return langToBCP47[lang] || 'en-IN';
+  }
 
   public static speak(text: string, lang: string = 'en', onEnd?: () => void) {
     if (!('speechSynthesis' in window)) {
@@ -27,14 +35,16 @@ export class SpeechService {
     const cleanText = text.replace(/[*#_`~]/g, '');
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = langToBCP47[lang] || 'en-IN';
+    const targetLocale = this.getLocale(lang);
+    utterance.lang = targetLocale;
     utterance.rate = 0.95; // Slightly calmer pace for farmers
     utterance.pitch = 1.0;
 
     // Try finding matching voice
     const voices = window.speechSynthesis.getVoices();
-    const targetLangPrefix = (langToBCP47[lang] || 'en-IN').split('-')[0];
-    const matchedVoice = voices.find(v => v.lang.startsWith(targetLangPrefix));
+    const targetLangPrefix = targetLocale.split('-')[0].toLowerCase();
+    const matchedVoice = voices.find(v => v.lang.toLowerCase() === targetLocale.toLowerCase())
+      || voices.find(v => v.lang.toLowerCase().startsWith(`${targetLangPrefix}-`));
     if (matchedVoice) {
       utterance.voice = matchedVoice;
     }
@@ -70,9 +80,12 @@ export class SpeechService {
     }
 
     const recognition = new SpeechRecognition();
+    this.activeLanguage = lang;
+    this.activeOnResult = onResult;
+    this.activeOnError = onError;
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = langToBCP47[lang] || 'en-IN';
+    recognition.lang = this.getLocale(lang);
 
     recognition.onresult = (event: any) => {
       let interimTranscript = '';
@@ -97,6 +110,11 @@ export class SpeechService {
     };
 
     recognition.onend = () => {
+      if (this.restartAfterLanguageChange && this.activeOnResult) {
+        this.restartAfterLanguageChange = false;
+        this.startListening(this.activeLanguage, this.activeOnResult, this.activeOnError);
+        return;
+      }
       this.isListening = false;
     };
 
@@ -106,7 +124,17 @@ export class SpeechService {
     return recognition;
   }
 
+  public static setLanguage(lang: string) {
+    this.activeLanguage = lang;
+    this.stopSpeaking();
+    if (this.recognition && this.isListening && this.activeOnResult) {
+      this.restartAfterLanguageChange = true;
+      this.recognition.stop();
+    }
+  }
+
   public static stopListening() {
+    this.restartAfterLanguageChange = false;
     if (this.recognition && this.isListening) {
       this.recognition.stop();
       this.isListening = false;

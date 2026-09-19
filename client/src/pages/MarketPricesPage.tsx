@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { marketAPI } from '../services/api';
 import { MarketPrice } from '../types';
+import { getDistrictDisplayName } from '../data/indiaLocations';
 import { ShoppingBag, Search, TrendingUp, TrendingDown, Minus, Filter, RefreshCw, AlertCircle } from 'lucide-react';
 
 export const MarketPricesPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [locations, setLocations] = useState<Record<string, any>>({});
   const [selectedState, setSelectedState] = useState<string>('');
@@ -104,13 +105,13 @@ export const MarketPricesPage: React.FC = () => {
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider">
           <ShoppingBag className="w-4 h-4" />
-          <span>{t('market.liveTitle')}</span>
+          <span>{t('market.title')}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
           {t('market.title')}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          {t('market.subtitle')}
+          {t('market.referenceNote')}
         </p>
       </div>
 
@@ -154,7 +155,7 @@ export const MarketPricesPage: React.FC = () => {
                 <option value="">{t('market.allDistricts')}</option>
                 {availableDistricts.map((dist) => (
                   <option key={dist} value={dist}>
-                    {t(`data.districts.${dist}`, { defaultValue: dist })}
+                    {getDistrictDisplayName(dist, i18n.language)}
                   </option>
                 ))}
               </select>
@@ -240,7 +241,7 @@ export const MarketPricesPage: React.FC = () => {
             {prices.map((item) => {
               const cropTranslated = t(`data.crops.${item.crop}`, { defaultValue: item.crop });
               const stateTranslated = t(`data.states.${item.state}`, { defaultValue: item.state });
-              const districtTranslated = t(`data.districts.${item.district}`, { defaultValue: item.district });
+              const districtTranslated = getDistrictDisplayName(item.district, i18n.language);
               const marketTranslated = t(`data.markets.${item.market}`, { defaultValue: item.market });
 
               return (

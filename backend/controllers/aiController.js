@@ -547,6 +547,7 @@ function buildReport(prediction, environmentalRisk = null, heatmapUrl = null) {
 
   if (!baseReport) {
     return {
+      diseaseKey: className,
       cropName: 'Unknown',
       diseaseName: 'Unknown',
       confidenceScore: prediction.confidenceScore,
@@ -574,6 +575,7 @@ function buildReport(prediction, environmentalRisk = null, heatmapUrl = null) {
 
   return {
     ...baseReport,
+    diseaseKey: className,
     confidenceScore: prediction.confidenceScore,
     confidenceLevel,
     isLowConfidence,

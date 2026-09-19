@@ -8,6 +8,7 @@ import {
   Sprout, TestTube, Leaf, Shield, CloudSun, RefreshCw, Bookmark, Volume2
 } from 'lucide-react';
 import { SpeechService } from '../services/speech';
+import { getLocalizedReport } from '../data/diseaseTranslations';
 
 export const CropScanner: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -16,10 +17,12 @@ export const CropScanner: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [report, setReport] = useState<ScanReport | null>(null);
+  const [rawReport, setRawReport] = useState<ScanReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const report = rawReport ? getLocalizedReport(rawReport, i18n.language) as ScanReport : null;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -28,7 +31,7 @@ export const CropScanner: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        setReport(null);
+        setRawReport(null);
         setError(null);
       };
       reader.readAsDataURL(file);
@@ -37,7 +40,7 @@ export const CropScanner: React.FC = () => {
 
   const handleCameraCapture = (base64Image: string) => {
     setImagePreview(base64Image);
-    setReport(null);
+    setRawReport(null);
     setError(null);
     try {
       const arr = base64Image.split(',');
@@ -65,7 +68,7 @@ export const CropScanner: React.FC = () => {
 
     setAnalyzing(true);
     setError(null);
-    setReport(null);
+    setRawReport(null);
     setSaveSuccess(false);
 
     try {
@@ -80,7 +83,7 @@ export const CropScanner: React.FC = () => {
       }
 
       if (res.data && res.data.report) {
-        setReport(res.data.report);
+        setRawReport(res.data.report);
       } else {
         setError(t('scanner.generateReportError'));
       }
@@ -112,7 +115,9 @@ export const CropScanner: React.FC = () => {
 
   const handleSpeakReport = () => {
     if (!report) return;
-    const speechText = `${t('scanner.reportTitle')}: ${report.diseaseName}. ${t('scanner.severity')}: ${report.severityLevel}. ${t('scanner.organic')}: ${report.organicTreatment?.join(', ')}. ${t('scanner.chemical')}: ${report.chemicalTreatment?.join(', ')}.`;
+    const confidenceLevel = t(`severity.${report.confidenceLevel || 'High'}`, { defaultValue: report.confidenceLevel || 'High' });
+    const severityLevel = t(`severity.${report.severityLevel}`, { defaultValue: report.severityLevel });
+    const speechText = `${t('scanner.reportTitle')}: ${report.diseaseName}. ${t('scanner.confidence')}: ${report.confidenceScore}% ${confidenceLevel}. ${t('scanner.severity')}: ${severityLevel}. ${t('scanner.organic')}: ${report.organicTreatment?.join(', ')}. ${t('scanner.chemical')}: ${report.chemicalTreatment?.join(', ')}. ${t('scanner.fertilizers')}: ${report.fertilizerRecommendations?.join(', ')}. ${t('scanner.prevention')}: ${report.preventionMethods?.join(', ')}.`;
     SpeechService.speak(speechText, i18n.language);
   };
 
@@ -145,7 +150,7 @@ export const CropScanner: React.FC = () => {
                 onClick={() => {
                   setImagePreview(null);
                   setSelectedFile(null);
-                  setReport(null);
+                  setRawReport(null);
                 }}
                 className="absolute top-2 right-2 p-2 rounded-full bg-slate-900/80 text-white hover:bg-slate-900"
                 title={t('cameraModal.retakePhoto')}
@@ -237,7 +242,7 @@ export const CropScanner: React.FC = () => {
                 onClick={() => {
                   setImagePreview(null);
                   setSelectedFile(null);
-                  setReport(null);
+                  setRawReport(null);
                 }}
                 className="mt-2 py-2 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all inline-flex items-center gap-2"
               >
@@ -254,19 +259,19 @@ export const CropScanner: React.FC = () => {
               <div>
                 <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">{t('scanner.reportTitle')}</span>
                 <h2 className="text-2xl sm:text-3xl font-black text-white">{report.diseaseName}</h2>
-                <p className="text-xs text-emerald-200 mt-1">{t('profile.primaryCrop')}: <span className="font-bold text-white">{report.cropName || 'Crop'}</span></p>
+                <p className="text-xs text-emerald-200 mt-1">{t('profile.primaryCrop')}: <span className="font-bold text-white">{report.cropName || t('profile.primaryCrop')}</span></p>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className={`px-3.5 py-1.5 rounded-full border font-black text-xs ${
                   report.confidenceLevel === 'Low' ? 'bg-amber-500/20 border-amber-400/40 text-amber-300' : 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
                 }`}>
-                  {report.confidenceScore}% {report.confidenceLevel || 'High'} {t('scanner.confidence')}
+                  {report.confidenceScore}% {t(`severity.${report.confidenceLevel || 'High'}`, { defaultValue: report.confidenceLevel || 'High' })} {t('scanner.confidence')}
                 </span>
                 <span className={`px-3.5 py-1.5 rounded-full text-xs font-black text-white ${
                   report.severityLevel === 'Critical' ? 'bg-rose-600' : report.severityLevel === 'High' ? 'bg-amber-600' : 'bg-emerald-600'
                 }`}>
-                  {report.severityLevel} {t('scanner.severity')}
+                  {t(`severity.${report.severityLevel}`, { defaultValue: report.severityLevel })} {t('scanner.severity')}
                 </span>
               </div>
             </div>
@@ -341,15 +346,15 @@ export const CropScanner: React.FC = () => {
               {report.environmentalRisk.weatherContext && (
                 <div className="grid grid-cols-3 gap-2 py-1">
                   <div className="bg-white/5 rounded-xl p-2.5 text-center border border-white/10">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Temperature</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">{t('scanner.temperature')}</span>
                     <span className="text-sm font-black text-amber-300">{report.environmentalRisk.weatherContext.temperature}°C</span>
                   </div>
                   <div className="bg-white/5 rounded-xl p-2.5 text-center border border-white/10">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Humidity</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">{t('scanner.humidity')}</span>
                     <span className="text-sm font-black text-blue-300">{report.environmentalRisk.weatherContext.humidity}%</span>
                   </div>
                   <div className="bg-white/5 rounded-xl p-2.5 text-center border border-white/10">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Rain Chance</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">{t('scanner.rainChance')}</span>
                     <span className="text-sm font-black text-cyan-300">{report.environmentalRisk.weatherContext.rainProbability}%</span>
                   </div>
                 </div>
@@ -358,7 +363,7 @@ export const CropScanner: React.FC = () => {
               {/* Risk Factors List */}
               {report.environmentalRisk.riskFactors && report.environmentalRisk.riskFactors.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Observed Environmental Risk Drivers</h4>
+                  <h4 className="text-xs font-bold text-indigo-200 uppercase tracking-wider">{t('scanner.riskDrivers')}</h4>
                   <ul className="space-y-1.5">
                     {report.environmentalRisk.riskFactors.map((factor, idx) => (
                       <li key={idx} className="text-xs text-slate-200 flex items-start gap-2 bg-white/5 p-2 rounded-lg">
@@ -373,7 +378,7 @@ export const CropScanner: React.FC = () => {
               {/* Environmental Guidance */}
               {report.environmentalRisk.environmentalAdvice && (
                 <div className="p-3.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-200 text-xs font-medium leading-relaxed">
-                  <span className="font-bold text-amber-300 block mb-1">Weather Advisory Recommendation:</span>
+                  <span className="font-bold text-amber-300 block mb-1">{t('scanner.weatherRecommendation')}:</span>
                   {report.environmentalRisk.environmentalAdvice}
                 </div>
               )}

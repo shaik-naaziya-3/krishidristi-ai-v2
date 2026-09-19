@@ -5,10 +5,14 @@ const AgriShop = require('../models/AgriShop');
 // Load JSON dataset from disk
 const jsonPath = path.join(__dirname, '../data/agriShops.json');
 let jsonShops = [];
+let jsonShopTranslationsById = new Map();
 try {
   if (fs.existsSync(jsonPath)) {
     const rawData = fs.readFileSync(jsonPath, 'utf8');
     jsonShops = JSON.parse(rawData);
+    jsonShopTranslationsById = new Map(
+      jsonShops.map(shop => [shop.id, shop.nameTranslations]).filter(([, translations]) => translations)
+    );
   }
 } catch (err) {
   console.warn('[ShopController] Could not read agriShops.json:', err.message);
@@ -56,6 +60,13 @@ exports.getNearbyShops = async (req, res) => {
     if (!allShops || allShops.length === 0) {
       allShops = jsonShops;
     }
+
+    // Existing Atlas records may predate localized names. Enrich them from the
+    // canonical JSON record by stable shop ID without changing stored IDs/names.
+    allShops = allShops.map(shop => ({
+      ...shop,
+      nameTranslations: shop.nameTranslations || jsonShopTranslationsById.get(shop.id) || null
+    }));
 
     let result = [...allShops];
 
