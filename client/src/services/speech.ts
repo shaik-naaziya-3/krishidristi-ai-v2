@@ -1,12 +1,12 @@
 // Speech Recognition & Speech Synthesis Utility
 
 const langToBCP47: Record<string, string> = {
-  en: 'en-US',
+  en: 'en-IN',
   te: 'te-IN',
   hi: 'hi-IN',
-  ta: 'ta-IN',
   kn: 'kn-IN',
-  ml: 'ml-IN'
+  ta: 'ta-IN',
+  mr: 'mr-IN'
 };
 
 export class SpeechService {

@@ -6,16 +6,19 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   mobile: { type: String, required: true, trim: true },
   password: { type: String, required: true },
-  preferredLanguage: { type: String, default: 'en' }, // en, te, hi, ta, kn, ml
-  state: { type: String, default: 'Andhra Pradesh' },
-  district: { type: String, default: 'Guntur' },
+  preferredLanguage: { type: String, default: 'en' }, // en, te, hi, ta, kn, mr
+  state: { type: String, default: '' },
+  district: { type: String, default: '' },
   profilePhoto: { type: String, default: '' },
   themePreference: { type: String, default: 'light' }, // light, dark
   accessibilityPreferences: {
     largeText: { type: Boolean, default: false },
     highContrast: { type: Boolean, default: false }
   },
-  createdAt: { type: Date, default: Date.now }
+  primaryCrop: { type: String, default: '' },
+  landSize: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 userSchema.pre('save', async function (next) {

@@ -38,7 +38,7 @@ export const Dashboard: React.FC = () => {
         activeState && activeDist
           ? weatherAPI.getWeather(activeState, activeDist).catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
-        marketAPI.getPrices('', activeState).catch(() => ({ data: { data: [] } })),
+        marketAPI.getPrices(activeState, activeDist).catch(() => ({ data: { data: [] } })),
         scanAPI.getHistory().catch(() => ({ data: [] })),
         schemeAPI.getSchemes().catch(() => ({ data: [] })),
         shopAPI.getShops(activeState, activeDist).catch(() => ({ data: [] }))

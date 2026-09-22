@@ -11,9 +11,9 @@ export const languages: Language[] = [
   { code: 'en', name: 'English' },
   { code: 'te', name: 'Telugu (తెలుగు)' },
   { code: 'hi', name: 'Hindi (हिंदी)' },
-  { code: 'ta', name: 'Tamil (தமிழ்)' },
   { code: 'kn', name: 'Kannada (ಕನ್ನಡ)' },
-  { code: 'ml', name: 'Malayalam (മലയാളം)' }
+  { code: 'ta', name: 'Tamil (தமிழ்)' },
+  { code: 'mr', name: 'Marathi (मराठी)' }
 ];
 
 interface LanguageContextType {

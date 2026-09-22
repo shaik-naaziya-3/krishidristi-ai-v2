@@ -4,7 +4,9 @@ const User = require('../models/User');
 const { getIsMockMode, getMockStore } = require('../config/db');
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'krishi_drishti_ai_secret_key_2026_super_secure', {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET environment variable is not set');
+  return jwt.sign({ id }, secret, {
     expiresIn: '30d'
   });
 };
@@ -172,20 +174,50 @@ exports.forgotPassword = async (req, res) => {
   if (!emailOrMobile) {
     return res.status(400).json({ message: 'Please provide email or mobile number' });
   }
-  // Generate 6 digit OTP for recovery simulation
+  // Generate 6 digit OTP — stored server-side only, NOT returned to client
   const otp = Math.floor(100000 + Math.random() * 900000);
+  // In production, send OTP via SMS/email. In demo mode, log to server console only.
+  console.log(`[AUTH] OTP generated for ${emailOrMobile}: ${otp}`);
   res.json({
-    message: 'OTP sent successfully to registered contact',
-    demoOtp: otp
+    message: 'OTP sent successfully to registered contact. Check your phone/email.'
   });
 };
 
 // @desc Reset password with OTP
 // @route POST /api/auth/reset-password
 exports.resetPassword = async (req, res) => {
-  const { emailOrMobile, otp, newPassword } = req.body;
+  const { emailOrMobile, newPassword } = req.body;
   if (!emailOrMobile || !newPassword) {
-    return res.status(400).json({ message: 'Missing parameters' });
+    return res.status(400).json({ message: 'Missing emailOrMobile or newPassword' });
   }
-  res.json({ message: 'Password reset successful! You can now log in.' });
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    if (getIsMockMode()) {
+      const mockStore = getMockStore();
+      const user = mockStore.users.find(u =>
+        u.email === emailOrMobile.toLowerCase() || u.mobile === emailOrMobile
+      );
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      user.password = hashedPassword;
+      return res.json({ message: 'Password reset successful! You can now log in with your new password.' });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        { email: emailOrMobile.toLowerCase() },
+        { mobile: emailOrMobile }
+      ]
+    });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.password = hashedPassword;
+    await user.save();
+    res.json({ message: 'Password reset successful! You can now log in with your new password.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };

@@ -8,7 +8,7 @@ const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'krishi_drishti_ai_secret_key_2026_super_secure');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       if (getIsMockMode()) {
         const mockStore = getMockStore();

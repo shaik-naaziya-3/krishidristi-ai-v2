@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const { connectDB } = require('./config/db');
@@ -20,7 +22,12 @@ const app = express();
 // Connect Database
 connectDB();
 
-// Middleware
+// Security: HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' } // allow static uploads to load in browser
+}));
+
+// CORS
 const clientUrl = process.env.CLIENT_URL;
 const corsOptions = {
   origin: clientUrl && clientUrl.trim() !== '' && clientUrl !== '*'
@@ -32,13 +39,31 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
+// Rate Limiting — auth endpoints (login/register/reset-password)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,
+  message: { message: 'Too many attempts from this IP. Please wait 15 minutes before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Rate Limiting — AI crop scan (expensive ML inference)
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { message: 'Too many AI scan requests. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // Serve Uploaded Files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/ai', aiLimiter, aiRoutes);
 app.use('/api/scan', scanRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/market', marketRoutes);

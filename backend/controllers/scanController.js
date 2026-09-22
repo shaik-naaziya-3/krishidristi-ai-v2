@@ -43,19 +43,52 @@ exports.getScanHistory = async (req, res) => {
   }
 };
 
-// @desc Delete scan report
+// @desc Delete scan report (owner only)
 // @route DELETE /api/scan/:id
 exports.deleteScanReport = async (req, res) => {
   try {
     const { id } = req.params;
     if (getIsMockMode()) {
       const mockStore = getMockStore();
+      const report = mockStore.scanReports.find(r => r._id === id);
+      if (!report) return res.status(404).json({ message: 'Scan report not found' });
+      if (report.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorised to delete this report' });
+      }
       mockStore.scanReports = mockStore.scanReports.filter(r => r._id !== id);
       return res.json({ message: 'Scan report deleted successfully' });
     }
 
-    await ScanReport.findByIdAndDelete(id);
+    const report = await ScanReport.findOneAndDelete({ _id: id, userId: req.user._id });
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found or you are not authorised to delete it' });
+    }
     res.json({ message: 'Scan report deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Get single scan report by ID (owner only)
+// @route GET /api/scan/:id
+exports.getScanById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (getIsMockMode()) {
+      const mockStore = getMockStore();
+      const report = mockStore.scanReports.find(r => r._id === id);
+      if (!report) return res.status(404).json({ message: 'Scan report not found' });
+      if (report.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorised to view this report' });
+      }
+      return res.json(report);
+    }
+
+    const report = await ScanReport.findOne({ _id: id, userId: req.user._id });
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found or you are not authorised to view it' });
+    }
+    res.json(report);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

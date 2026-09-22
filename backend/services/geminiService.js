@@ -175,9 +175,9 @@ async function analyzeCropDisease(
       en: 'English',
       te: 'Telugu',
       hi: 'Hindi',
-      ta: 'Tamil',
       kn: 'Kannada',
-      ml: 'Malayalam'
+      ta: 'Tamil',
+      mr: 'Marathi'
     };
 
     const selectedLanguage =
